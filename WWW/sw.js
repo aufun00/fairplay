@@ -22,7 +22,11 @@ const SHELL = [
   "./match3/match3.js",
   "./mathdoku/mathdoku.html",
   "./mathdoku/mathdoku.lang.en.js",
-  "./mathdoku/mathdoku.invcode.js"
+  "./mathdoku/mathdoku.invcode.js",
+  "./memory/memory.html",
+  "./memory/memory.lang.en.js",
+  "./memory/memory.invcode.js",
+  "./memory/memory.js"
 ];
 
 self.addEventListener("install", (e) => {

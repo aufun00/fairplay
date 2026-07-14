@@ -19,4 +19,5 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   /* 主页 · 游戏说明(键名 = 注册表 descKey) */
   game_match3_desc: "Match-3 · clear the board",
   game_mathdoku_desc: "MathDoku · logic grid",
+  game_memory_desc: "Memory · match the pairs",
 });

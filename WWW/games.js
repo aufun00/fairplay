@@ -4,4 +4,5 @@
 window.FAIRPLAY_GAMES = Object.assign(window.FAIRPLAY_GAMES || {}, {
   1: { id:1, slug:"match3",   entry:"match3/match3.html",     icon:"🍬", cat:"⚡", type:"📱", descKey:"game_match3_desc" },
   2: { id:2, slug:"mathdoku", entry:"mathdoku/mathdoku.html", icon:"🔢", cat:"🧠", type:"🃏", descKey:"game_mathdoku_desc" },
+  3: { id:3, slug:"memory",   entry:"memory/memory.html",     icon:"🎴", cat:"🧠", type:"🃏", descKey:"game_memory_desc" },
 });

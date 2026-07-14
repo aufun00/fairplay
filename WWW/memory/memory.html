@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>memory — FairPlay</title>
+  <link rel="stylesheet" href="../common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#14161a">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script>
+    if ("serviceWorker" in navigator) {
+      addEventListener("load", function () { navigator.serviceWorker.register("../sw.js").catch(function () {}); });
+    }
+  </script>
+
+  <style>
+    #frame { position: relative; }
+    #stage { display: flex; flex-direction: column; padding: .5rem; gap: .6rem; }
+    #hud { display: flex; align-items: baseline; justify-content: center; gap: 1.2rem; }
+    #pairs { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .card {
+      aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+      border-radius: .55rem; font-size: 2rem; line-height: 1;
+      cursor: pointer; -webkit-user-select: none; user-select: none;
+      transition: transform .15s, opacity .3s, background .15s, border-color .15s;
+    }
+    .card.down { background: linear-gradient(135deg, #2b3550, #1c2439); border: 1px solid var(--line); }
+    .card.up { background: var(--bar-bg); border: 1px solid var(--accent); }
+    .card.matched { opacity: 0; pointer-events: none; transform: scale(.85); }
+    #result:not([hidden]) {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, .72);
+    }
+    .rcard {
+      background: var(--bar-bg); border: 1px solid var(--line); border-radius: .6rem;
+      padding: 1.4rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: .9rem;
+    }
+    .rtitle { font-size: 1rem; color: var(--muted); }
+    .rscore { font-size: 1.7rem; font-weight: 700; }
+    .rcard button {
+      background: var(--accent); color: #fff; border: none; border-radius: .5rem;
+      padding: .7rem 1.6rem; font: inherit; font-size: 1.05rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="frame">
+    <header id="topbar">
+      <a class="logo" data-i18n="logo" href="../">FairPlay</a>
+      <span class="nickname" data-i18n="nickname">Guest</span>
+      <span class="spacer"></span>
+      <button type="button" data-i18n="exit">Exit</button>
+      <select aria-label="language"><option value="en">EN</option></select>
+      <span class="version" id="ver"></span>
+    </header>
+
+    <main id="stage"></main>
+  </div>
+
+  <!-- 版本号 + 通用编码模块 + 本游戏邀请码编解码 -->
+  <script src="../version.js"></script>
+  <script src="../pack.js"></script>
+  <script src="memory.invcode.js"></script>
+  <!-- 先通用置顶栏文本,再游戏专属文本 -->
+  <script src="../index.lang.en.js"></script>
+  <script src="memory.lang.en.js"></script>
+  <script>
+    /* 置顶栏文本绑定 + 版本号 */
+    (function () {
+      var L = (window.I18N && window.I18N.en) || {};
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var t = L[el.getAttribute("data-i18n")];
+        if (t != null) el.textContent = t;
+      });
+      var ver = document.getElementById("ver");
+      if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
+    })();
+  </script>
+  <!-- 游戏逻辑 -->
+  <script src="memory.js"></script>
+</body>
+</html>
