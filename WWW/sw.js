@@ -10,6 +10,7 @@ const SHELL = [
   "./common.css",
   "./version.js",
   "./pack.js",
+  "./result.js",
   "./games.js",
   "./index.lang.en.js",
   "./manifest.webmanifest",

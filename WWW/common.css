@@ -19,7 +19,26 @@ body{
   aspect-ratio:1 / 1.8; max-height:100vh;
   background:var(--bg); display:flex; flex-direction:column;
   overflow:hidden; box-shadow:0 0 0 1px var(--line);
+  position:relative;   /* 覆盖层定位基准 */
 }
+
+/* 覆盖层(结果页 / 开始页共用) */
+.fp-overlay:not([hidden]){
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.72);
+}
+.fp-overlay .rcard{
+  background:var(--bar-bg); border:1px solid var(--line); border-radius:.6rem;
+  padding:1.4rem 1.8rem; text-align:center; display:flex; flex-direction:column; gap:.9rem;
+}
+.fp-overlay .rtitle{ font-size:1rem; color:var(--muted); }
+.fp-overlay .rscore{ font-size:1.7rem; font-weight:700; }
+.fp-overlay .rbtns{ display:flex; gap:.6rem; justify-content:center; }
+.fp-overlay button{
+  background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+  padding:.7rem 1.2rem; font:inherit; font-size:1rem; cursor:pointer;
+}
+.fp-overlay .rhome{ background:transparent; color:var(--fg); border:1px solid var(--line); }
 
 /* 置顶栏(全站一致) */
 #topbar{

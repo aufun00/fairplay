@@ -90,11 +90,10 @@
     stage.innerHTML =
       '<div id="hud"><div id="clock">30.0s</div><div id="score">0</div></div>' +
       '<div id="board"></div>' +
-      '<div id="start"><div class="rcard">' +
+      '<div id="start" class="fp-overlay"><div class="rcard">' +
         '<div class="rtitle">#' + seedParam.slice(-4) + '</div>' +
         '<button id="startbtn">' + (L.m3_start || "Start") + '</button>' +
-      '</div></div>' +
-      '<div id="result" hidden></div>';
+      '</div></div>';
     boardEl = document.getElementById("board");
     clockEl = document.getElementById("clock");
     scoreEl = document.getElementById("score");
@@ -164,31 +163,17 @@
     clearInterval(timerId);
     busy = true; selected = null; render();
     clockEl.textContent = "0.0s";
-    showResult(score);
-  }
-
-  function doShare() {
-    var nick = L.nickname || "Guest";
     var line = (L.m3_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", nick).replace("{score}", score).replace("{code}", seedParam.slice(-4));
-    var msg = (L.logo || "FairPlay") + "\n" + line;   // 站名 + 换行 + 成绩;只发文本,不发链接
-    try {
-      if (navigator.share) { navigator.share({ text: msg }).catch(function () {}); }
-      else if (navigator.clipboard) { navigator.clipboard.writeText(msg); }
-    } catch (e) {
-      if (navigator.clipboard) navigator.clipboard.writeText(msg);
-    }
-  }
-  function showResult(sc) {
-    var el = document.getElementById("result");
-    el.hidden = false;
-    el.innerHTML =
-      '<div class="rcard">' +
-      '<div class="rtitle">' + (L.m3_timeup || "Time's up!") + '</div>' +
-      '<div class="rscore">' + (L.score || "Score") + ': ' + sc + '</div>' +
-      '<button id="rshare">' + (L.m3_share_btn || "Share result") + '</button>' +
-      '</div>';
-    document.getElementById("rshare").addEventListener("click", doShare);
+      .replace("{nick}", L.nickname || "Guest").replace("{score}", score).replace("{code}", seedParam.slice(-4));
+    window.FairPlay.showResult({
+      title: L.m3_timeup || "Time's up!",
+      score: score,
+      scoreLabel: L.score || "Score",
+      shareText: (L.logo || "FairPlay") + "\n" + line,   // 只发文本,不发链接
+      shareLabel: L.m3_share_btn || "Share result",
+      homeLabel: L.home || "Home",
+      homeHref: "../"
+    });
   }
 
   /* ---- 启动:先画空棋盘 + Start(不画棋子、不计时,防提前规划)---- */

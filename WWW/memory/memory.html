@@ -20,7 +20,6 @@
   </script>
 
   <style>
-    #frame { position: relative; }
     #stage { display: flex; flex-direction: column; padding: .5rem; gap: .6rem; }
     #hud { display: flex; align-items: baseline; justify-content: center; gap: 1.2rem; }
     #pairs { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -35,20 +34,6 @@
     .card.down { background: linear-gradient(135deg, #2b3550, #1c2439); border: 1px solid var(--line); }
     .card.up { background: var(--bar-bg); border: 1px solid var(--accent); }
     .card.matched { opacity: 0; pointer-events: none; transform: scale(.85); }
-    #result:not([hidden]) {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, .72);
-    }
-    .rcard {
-      background: var(--bar-bg); border: 1px solid var(--line); border-radius: .6rem;
-      padding: 1.4rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: .9rem;
-    }
-    .rtitle { font-size: 1rem; color: var(--muted); }
-    .rscore { font-size: 1.7rem; font-weight: 700; }
-    .rcard button {
-      background: var(--accent); color: #fff; border: none; border-radius: .5rem;
-      padding: .7rem 1.6rem; font: inherit; font-size: 1.05rem; cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -84,7 +69,8 @@
       if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
     })();
   </script>
-  <!-- 游戏逻辑 -->
+  <!-- 通用结果页 + 游戏逻辑 -->
+  <script src="../result.js"></script>
   <script src="memory.js"></script>
 </body>
 </html>

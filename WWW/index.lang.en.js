@@ -5,6 +5,7 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   logo: "FairPlay",
   nickname: "Guest",
   exit: "Exit",
+  home: "Home",
 
   /* 主页 · history / recent */
   share_btn: "Share invite",

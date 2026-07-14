@@ -29,8 +29,7 @@
     var stage = document.getElementById("stage");
     stage.innerHTML =
       '<div id="hud"><div id="pairs">0/' + PAIRS + '</div><div id="score">0</div></div>' +
-      '<div id="board"></div>' +
-      '<div id="result" hidden></div>';
+      '<div id="board"></div>';
     boardEl = document.getElementById("board");
     pairsEl = document.getElementById("pairs");
     scoreEl = document.getElementById("score");
@@ -82,33 +81,20 @@
     render();
   }
 
-  /* ---- 结束 → 成绩 → 分享(只发文本)---- */
+  /* ---- 结束 → 通用结果页 ---- */
   function endGame() {
     if (ended) return; ended = true;
-    showResult(score);
-  }
-  function doShare() {
-    var nick = L.nickname || "Guest";
     var line = (L.mem_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", nick).replace("{score}", score).replace("{code}", seedParam.slice(-4));
-    var msg = (L.logo || "FairPlay") + "\n" + line;
-    try {
-      if (navigator.share) { navigator.share({ text: msg }).catch(function () {}); }
-      else if (navigator.clipboard) { navigator.clipboard.writeText(msg); }
-    } catch (e) {
-      if (navigator.clipboard) navigator.clipboard.writeText(msg);
-    }
-  }
-  function showResult(sc) {
-    var el = document.getElementById("result");
-    el.hidden = false;
-    el.innerHTML =
-      '<div class="rcard">' +
-      '<div class="rtitle">' + (L.mem_done || "All matched!") + '</div>' +
-      '<div class="rscore">' + (L.score || "Score") + ': ' + sc + '</div>' +
-      '<button id="rshare">' + (L.mem_share_btn || "Share result") + '</button>' +
-      '</div>';
-    document.getElementById("rshare").addEventListener("click", doShare);
+      .replace("{nick}", L.nickname || "Guest").replace("{score}", score).replace("{code}", seedParam.slice(-4));
+    window.FairPlay.showResult({
+      title: L.mem_done || "All matched!",
+      score: score,
+      scoreLabel: L.score || "Score",
+      shareText: (L.logo || "FairPlay") + "\n" + line,   // 只发文本,不发链接
+      shareLabel: L.mem_share_btn || "Share result",
+      homeLabel: L.home || "Home",
+      homeHref: "../"
+    });
   }
 
   function boot() { buildUI(); render(); }
