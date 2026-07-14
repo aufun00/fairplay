@@ -329,12 +329,12 @@
         var nick = L.nickname || "Guest";
         var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
           .replace("{nick}", nick).replace("{site}", L.logo || "FairPlay").replace("{code}", selected.param.slice(-4));
-        /* 邀请语(含项目名)+ 链接;折进 text(不单独传 url,避免被 URL 预览卡盖掉) */
-        var text = line + "\n" + inviteLink(selected);
+        var url = inviteLink(selected);
+        /* 文本只留干净句子;链接走 url 字段(接收 App 一般渲染成"FairPlay"标题卡) */
         if (navigator.share) {
-          navigator.share({ text: text }).catch(function () {});
+          navigator.share({ text: line, url: url }).catch(function () {});
         } else if (navigator.clipboard) {
-          navigator.clipboard.writeText(text);
+          navigator.clipboard.writeText(line + "\n" + url);
         }
       });
 
