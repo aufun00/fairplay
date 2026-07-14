@@ -321,10 +321,12 @@
       document.querySelector("#history .share").addEventListener("click", function () {
         if (!selected) return;
         var nick = L.nickname || "Guest";
-        var msg = (L.share_msg || "{nick} invites you to play").replace("{nick}", nick);
+        var line = (L.share_msg || "{nick} invites you to play #{code}")
+          .replace("{nick}", nick).replace("{code}", selected.param.slice(-4));
+        var msg = (L.logo || "FairPlay") + "\n" + line;   // 站名 + 换行 + 邀请语
         var url = inviteLink(selected);
         if (navigator.share) {
-          navigator.share({ title: L.logo || "FairPlay", text: msg, url: url }).catch(function () {});
+          navigator.share({ text: msg, url: url }).catch(function () {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(msg + " " + url);
         }

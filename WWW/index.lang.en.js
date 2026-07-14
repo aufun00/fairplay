@@ -8,7 +8,7 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
 
   /* 主页 · history / recent */
   share_btn: "Share invite",
-  share_msg: "{nick} invites you to play",
+  share_msg: "{nick} invites you to play #{code}",
   pick_empty: "No invites yet",
   inv_created: "created",
   memo_ph: "memo",

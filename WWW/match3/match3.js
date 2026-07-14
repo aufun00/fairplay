@@ -163,19 +163,16 @@
     showResult(score);
   }
 
-  function inviteLink() {
-    return new URL("../?g=1&p=" + encodeURIComponent(seedParam), location.href).href;
-  }
   function doShare() {
     var nick = L.nickname || "Guest";
-    var msg = (L.m3_share || "{nick} scored {score} on match3 — can you beat it?")
-      .replace("{nick}", nick).replace("{score}", score);
-    var url = inviteLink();
+    var line = (L.m3_share || "{nick} scored {score} in #{code}")
+      .replace("{nick}", nick).replace("{score}", score).replace("{code}", seedParam.slice(-4));
+    var msg = (L.logo || "FairPlay") + "\n" + line;   // 站名 + 换行 + 成绩;只发文本,不发链接
     try {
-      if (navigator.share) { navigator.share({ title: L.logo || "FairPlay", text: msg, url: url }).catch(function () {}); }
-      else if (navigator.clipboard) { navigator.clipboard.writeText(msg + " " + url); }
+      if (navigator.share) { navigator.share({ text: msg }).catch(function () {}); }
+      else if (navigator.clipboard) { navigator.clipboard.writeText(msg); }
     } catch (e) {
-      if (navigator.clipboard) navigator.clipboard.writeText(msg + " " + url);
+      if (navigator.clipboard) navigator.clipboard.writeText(msg);
     }
   }
   function showResult(sc) {
