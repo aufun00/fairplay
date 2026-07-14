@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- FairPlay favicon:天秤座符号 ♎(矢量,不依赖字体);蓝底白符号,与 icon.svg 同品牌色 -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a9eff"/>
+      <stop offset="1" stop-color="#245cc0"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#g)"/>
+  <g fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 16 H24"/>
+    <path d="M11.5 16 Q16 7.5 20.5 16"/>
+    <path d="M8 22 H24"/>
+  </g>
+</svg>

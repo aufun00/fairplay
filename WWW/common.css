@@ -27,10 +27,33 @@ body{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   background:rgba(0,0,0,.72);
 }
-.fp-overlay .rcard{
+.fp-overlay .fp-card{
   background:var(--bar-bg); border:1px solid var(--line); border-radius:.6rem;
   padding:1.4rem 1.8rem; text-align:center; display:flex; flex-direction:column; gap:.9rem;
 }
+/* 昵称编辑弹窗(复用 .fp-card,改左对齐 + 表单样式) */
+.fp-overlay .fp-card.nk{ text-align:left; gap:.7rem; max-width:20rem; }
+.fp-card.nk .nk-title{ font-size:1rem; font-weight:700; }
+.fp-card.nk .nk-input{
+  width:100%; background:var(--bg); color:var(--fg);
+  border:1px solid var(--line); border-radius:.4rem; padding:.45rem .6rem; font:inherit;
+}
+.fp-card.nk .nk-note{ font-size:.78rem; color:var(--muted); line-height:1.45; margin:0; }
+.fp-card.nk .nk-ack{ display:flex; align-items:flex-start; gap:.45rem; font-size:.82rem; cursor:pointer; }
+.fp-card.nk .nk-ack input{ margin-top:.15rem; flex:0 0 auto; }
+.fp-card.nk .nk-btns{ display:flex; gap:.6rem; justify-content:flex-end; }
+.fp-card.nk .nk-btns button{ padding:.5rem 1rem; font-size:.95rem; }
+.fp-card.nk .nk-btns .nk-cancel{ background:transparent; color:var(--fg); border:1px solid var(--line); }
+.fp-card.nk .nk-btns .nk-ok:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* 语言选择弹窗 */
+.fp-overlay .fp-card.lang{ text-align:left; gap:.7rem; min-width:12rem; }
+.fp-card.lang .lang-list{ display:flex; flex-direction:column; gap:.4rem; }
+.fp-card.lang .lang-item{
+  background:transparent; color:var(--fg); border:1px solid var(--line);
+  border-radius:.5rem; padding:.5rem .7rem; font:inherit; text-align:left; cursor:pointer;
+}
+.fp-card.lang .lang-item.on{ border-color:var(--accent); color:var(--accent); }
 .fp-overlay .rtitle{ font-size:1rem; color:var(--muted); }
 .fp-overlay .rscore{ font-size:1.7rem; font-weight:700; }
 .fp-overlay .rbtns{ display:flex; gap:.6rem; justify-content:center; }
@@ -48,17 +71,21 @@ body{
   padding:0 .75rem; padding-top:env(safe-area-inset-top);
 }
 #topbar .logo{
-  font-weight:700; letter-spacing:.3px; white-space:nowrap;
+  flex:0 0 auto; font-weight:700; letter-spacing:.3px; white-space:nowrap;
   color:var(--fg); text-decoration:none;
 }
 #topbar .spacer{ flex:1 1 auto; }
+/* 昵称吸收窄屏挤压:可收缩 + 省略号;其余元素固定不缩 */
 #topbar .nickname{
-  color:var(--muted); max-width:8rem;
+  flex:0 1 auto; min-width:0; color:var(--muted); max-width:8rem; cursor:pointer;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 #topbar .version{
-  color:var(--muted); font-size:.72rem; font-variant-numeric:tabular-nums;
+  flex:0 0 auto; color:var(--muted); font-size:.72rem; font-variant-numeric:tabular-nums;
 }
+/* 语言按钮:图标 + 当前语言缩略字(En / 中),宽度随内容 */
+#topbar .langbtn{ width:auto; gap:.15rem; padding:0 .3rem; }
+#topbar .langbtn .lang-code{ font-size:.72rem; line-height:1; }
 #topbar button, #topbar select{
   background:transparent; color:var(--fg); border:1px solid var(--line);
   border-radius:.4rem; padding:.25rem .5rem; font:inherit; cursor:pointer;
@@ -68,7 +95,7 @@ body{
    svg.ic 内的 <use> 引用 assets/icons.svg,stroke=currentColor 跟随下方 color。 */
 .iconbtn{
   display:inline-flex; align-items:center; justify-content:center;
-  width:2rem; height:2rem; padding:0;
+  flex:0 0 auto; width:2rem; height:2rem; padding:0;
   background:transparent; border:none; border-radius:.4rem;
   color:var(--fg); cursor:pointer;
 }

@@ -7,7 +7,7 @@
   var FRUITS = ["", "🍎", "🍊", "🍋", "🍇", "🍉", "🫐"]; // 1..6
 
   var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.match3;
-  var L = (window.I18N && window.I18N.en) || {};
+  var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
 
   /* ---- 取种子:gamepage 只能凭邀请码进。无 ?p / 校验不过 = 非正常流程 → 回主页 ---- */
   var p = new URLSearchParams(location.search).get("p");
@@ -90,7 +90,7 @@
     stage.innerHTML =
       '<div id="hud"><div id="clock">30.0s</div><div id="score">0</div></div>' +
       '<div id="board"></div>' +
-      '<div id="start" class="fp-overlay"><div class="rcard">' +
+      '<div id="start" class="fp-overlay"><div class="fp-card">' +
         '<div class="rtitle">#' + seedParam.slice(-4) + '</div>' +
         '<button id="startbtn">' + (L.m3_start || "Start") + '</button>' +
       '</div></div>';
@@ -164,7 +164,7 @@
     busy = true; selected = null; render();
     clockEl.textContent = "0.0s";
     var line = (L.m3_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", L.nickname || "Guest").replace("{score}", score).replace("{code}", seedParam.slice(-4));
+      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score).replace("{code}", seedParam.slice(-4));
     window.FairPlay.showResult({
       title: L.m3_timeup || "Time's up!",
       score: score,

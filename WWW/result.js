@@ -14,28 +14,26 @@ window.FairPlay.share = function (text) {
 
 window.FairPlay.showResult = function (opts) {
   opts = opts || {};
-  var ov = document.createElement("div");
-  ov.className = "fp-overlay";
-  ov.innerHTML =
-    '<div class="rcard">' +
-      '<div class="rtitle"></div>' +
-      '<div class="rscore"></div>' +
-      '<div class="rbtns">' +
-        '<button class="rhome"></button>' +
-        '<button class="rshare"></button>' +
-      '</div>' +
-    '</div>';
-  ov.querySelector(".rtitle").textContent = opts.title || "";
-  ov.querySelector(".rscore").textContent = (opts.scoreLabel || "Score") + ": " + opts.score;
+  return window.FairPlay.openModal({
+    dismissible: false,   /* 结果页不允许点背板关,必须选 Home / Share */
+    build: function (card) {
+      card.innerHTML =
+        '<div class="rtitle"></div>' +
+        '<div class="rscore"></div>' +
+        '<div class="rbtns">' +
+          '<button class="rhome"></button>' +
+          '<button class="rshare"></button>' +
+        '</div>';
+      card.querySelector(".rtitle").textContent = opts.title || "";
+      card.querySelector(".rscore").textContent = (opts.scoreLabel || "Score") + ": " + opts.score;
 
-  var home = ov.querySelector(".rhome");
-  home.textContent = opts.homeLabel || "Home";
-  home.addEventListener("click", function () { location.href = opts.homeHref || "../"; });
+      var home = card.querySelector(".rhome");
+      home.textContent = opts.homeLabel || "Home";
+      home.addEventListener("click", function () { location.href = opts.homeHref || "../"; });
 
-  var share = ov.querySelector(".rshare");
-  share.textContent = opts.shareLabel || "Share";
-  share.addEventListener("click", function () { window.FairPlay.share(opts.shareText || ""); });
-
-  (document.getElementById("frame") || document.body).appendChild(ov);
-  return ov;
+      var share = card.querySelector(".rshare");
+      share.textContent = opts.shareLabel || "Share";
+      share.addEventListener("click", function () { window.FairPlay.share(opts.shareText || ""); });
+    }
+  });
 };

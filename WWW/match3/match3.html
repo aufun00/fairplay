@@ -9,7 +9,9 @@
   <!-- PWA -->
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#14161a">
+  <link rel="icon" href="../favicon.svg">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FairPlay">
@@ -41,14 +43,8 @@
 <body>
   <div id="frame">
     <!-- 置顶栏(全站一致);logo 回主页 -->
-    <header id="topbar">
-      <a class="logo" data-i18n="logo" href="../">FairPlay</a>
-      <span class="nickname" data-i18n="nickname">Guest</span>
-      <span class="spacer"></span>
-      <button type="button" data-i18n="exit">Exit</button>
-      <select aria-label="language"><option value="en">EN</option></select>
-      <span class="version" id="ver"></span>
-    </header>
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
+    <header id="topbar"></header>
 
     <!-- 游戏区:除置顶栏外留空 -->
     <main id="stage"></main>
@@ -61,7 +57,10 @@
   <!-- 先通用置顶栏文本,再游戏专属文本 -->
   <script src="../index.lang.js"></script>
   <script src="match3.lang.js"></script>
-  <script>FairPlay.initTopbar();</script>
+  <!-- 图标雪碧图 + 置顶栏内容注入(在 applyI18n 翻译之前) -->
+  <script src="../assets/icons.js"></script>
+  <script src="../topbar.js"></script>
+  <script>FairPlay.applyI18n();</script>
   <!-- 通用结果页 + 游戏逻辑 -->
   <script src="../result.js"></script>
   <script src="match3.js"></script>

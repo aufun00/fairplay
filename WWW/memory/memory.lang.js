@@ -7,3 +7,9 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   mem_share_btn: "Share result",
   mem_share: "{nick} scored {score} in #{code}"
 });
+window.I18N.zh = Object.assign(window.I18N.zh || {}, {
+  score: "分数",
+  mem_done: "全部配对!",
+  mem_share_btn: "分享成绩",
+  mem_share: "{nick} 在 #{code} 得了 {score} 分"
+});

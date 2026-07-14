@@ -8,7 +8,7 @@
   var FRUITS = ["", "🍎", "🍊", "🍋", "🍇", "🍉", "🫐"]; // 1..6
 
   var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.memory;
-  var L = (window.I18N && window.I18N.en) || {};
+  var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
 
   /* ---- 种子:只能凭邀请码进 ---- */
   var p = new URLSearchParams(location.search).get("p");
@@ -85,7 +85,7 @@
   function endGame() {
     if (ended) return; ended = true;
     var line = (L.mem_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", L.nickname || "Guest").replace("{score}", score).replace("{code}", seedParam.slice(-4));
+      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score).replace("{code}", seedParam.slice(-4));
     window.FairPlay.showResult({
       title: L.mem_done || "All matched!",
       score: score,

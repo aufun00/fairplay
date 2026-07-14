@@ -9,7 +9,9 @@
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#14161a">
+  <link rel="icon" href="favicon.svg">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FairPlay">
@@ -49,17 +51,25 @@
     .sec-label{ color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.5rem; }
     .placeholder{ color:var(--muted); font-size:.85rem; padding:.5rem 0; }
 
-    /* history:左 QR(跨 3 行,方形),右 param/memo + Share + PickInv */
-    #history{ display:flex; gap:.75rem; align-items:flex-start; }
+    /* history:纵向两排。上排 .htop = 左 QR(跨 param/memo 2 行,方形)+ 右 invrow;下排 PickInv 撑满 */
+    #history{ display:flex; flex-direction:column; gap:.5rem; }
+    #history .htop{ display:flex; gap:.75rem; align-items:flex-start; }
     #history .qr{
-      flex:0 0 auto; align-self:flex-start;
+      flex:0 0 auto; position:relative;
       border:1px solid var(--line); border-radius:.5rem;
       display:flex; align-items:center; justify-content:center;
       color:var(--muted); font-size:.8rem;
     }
-    #history .hcol{ flex:1 1 auto; display:flex; flex-direction:column; gap:.5rem; min-width:0; }
-    /* 上部:左侧 param/memo 两行,右侧 Share 按钮跨这两行 */
-    #history .invrow{ display:flex; gap:.5rem; align-items:stretch; }
+    /* QR 长按 → 确认层:新标签打开游戏 */
+    #history .qr .qr-open{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center; text-align:center;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+      font:inherit; font-size:.75rem; padding:.2rem; cursor:pointer;
+    }
+    #history .qr.confirm .qr-open{ display:flex; }
+    /* invrow:左 param/memo 两行,右 Share 按钮跨这两行 */
+    #history .invrow{ flex:1 1 auto; display:flex; gap:.5rem; align-items:stretch; min-width:0; }
     #history .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
     #history .invfields input{
       width:100%; background:var(--bg); color:var(--fg);
@@ -72,14 +82,16 @@
       background:var(--accent); color:#fff; border:none; border-radius:.5rem;
       padding:.5rem .7rem; font:inherit; cursor:pointer;
     }
+    /* PickInv:撑满整宽、横向滚动;固定预留底部横滚动条空带(padding-bottom),避免滚动条压扁卡片 */
     #history .pickinv{
-      flex:1 1 auto; display:flex; gap:.5rem; overflow-x:auto;
-      align-items:stretch; min-height:3.5rem;
+      display:flex; gap:.5rem; align-items:stretch;
+      overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+      min-height:3.5rem; padding-bottom:.55rem;
     }
     #history .pi-empty{ color:var(--muted); font-size:.8rem; align-self:center; }
     /* PickInv 条目:图标 + 末4位 + 备注/创建时刻 */
     #history .pi-item{
-      flex:0 0 auto; width:4.5rem;
+      position:relative; flex:0 0 auto; width:4.5rem;
       display:flex; flex-direction:column; align-items:center; gap:.1rem;
       background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
       border-radius:.5rem; padding:.3rem; font:inherit; cursor:pointer;
@@ -92,6 +104,13 @@
       font-size:.62rem; color:var(--muted);
       max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }
+    /* 长按删除确认:卡面浮出居中 🗑️,再点一次确认删除;点别处取消 */
+    #history .pi-item .pi-del{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center; font-size:1.4rem;
+      background:rgba(0,0,0,.45); border-radius:.5rem;
+    }
+    #history .pi-item.confirm .pi-del{ display:flex; }
 
     /* games:Tab + 矩阵 */
     .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
@@ -113,24 +132,17 @@
 <body>
   <div id="frame">
     <!-- 置顶栏(占位,先不实现) -->
-    <header id="topbar">
-      <a class="logo" data-i18n="logo" href="./">FairPlay</a>
-      <span class="nickname" data-i18n="nickname">Guest</span>
-      <span class="spacer"></span>
-      <button type="button" class="iconbtn" data-i18n-aria="exit" aria-label="Exit">
-        <svg class="ic" aria-hidden="true"><use href="#exit"/></svg>
-      </button>
-      <button type="button" class="iconbtn" data-i18n-aria="lang" aria-label="Language">
-        <svg class="ic" aria-hidden="true"><use href="#lang"/></svg>
-      </button>
-      <span class="version" id="ver"></span>
-    </header>
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
+    <header id="topbar"></header>
 
     <main id="content">
-      <!-- history:QR + 分享 + PickInv(占位) -->
+      <!-- history:上排 [QR(跨2行) + param/memo/Share],下排 PickInv 撑满横滚 -->
       <section id="history" class="block">
-        <div class="qr">QR</div>
-        <div class="hcol">
+        <div class="htop">
+          <div class="qr">
+            <span class="qr-code">QR</span>
+            <button type="button" class="qr-open" data-i18n="qr_open">↗ New tab</button>
+          </div>
           <div class="invrow">
             <div class="invfields">
               <input class="param" type="text" readonly placeholder="—">
@@ -138,9 +150,9 @@
             </div>
             <button class="share" data-i18n="share_btn">Share invite</button>
           </div>
-          <div class="pickinv" id="pickinv">
-            <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
-          </div>
+        </div>
+        <div class="pickinv" id="pickinv">
+          <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
         </div>
       </section>
 
@@ -167,16 +179,18 @@
 
   <!-- 主页语言包(含通用置顶栏文本) -->
   <script src="index.lang.js"></script>
+  <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
+  <script src="topbar.js"></script>
   <script>
     (function () {
-      var lang = "en";
+      var lang = window.FairPlay.getLang();
       var L = (window.I18N && window.I18N[lang]) || {};
       var games = window.FAIRPLAY_GAMES || {};
       var codecs = window.FAIRPLAY_CODECS || {};
       var base = location.origin + location.pathname;   // 邀请码基址(不含 query)
 
       /* 置顶栏:i18n 文本 + 占位符 + 版本号 */
-      window.FairPlay.initTopbar();
+      window.FairPlay.applyI18n();
 
       /* ---- History(本地持久化)---- */
       var HKEY = "fairplay.history";
@@ -184,23 +198,27 @@
       function saveHistory() { try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) {} }
       var history = loadHistory();
       var selected = null;
+      var pendingDelete = null;   // 待删确认的条目
+      var lastLongPress = 0;      // 最近一次长按触发时刻(吞掉长按松手的那次 click)
 
       function inviteLink(item) {
         return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param);
       }
 
       var qrEl = document.querySelector("#history .qr");
+      var qrCodeEl = qrEl.querySelector(".qr-code");
+      var qrOpenBtn = qrEl.querySelector(".qr-open");
       var paramEl = document.querySelector("#history .param");
       var memoEl = document.querySelector("#history .memo");
 
-      /* QR 保持正方形,边长 = 右侧 hcol 全高(跨 param/memo/PickInv 3 行) */
-      var hcol = document.querySelector("#history .hcol");
+      /* QR 保持正方形,边长 = 右侧 invrow 高(跨 param/memo 2 行) */
+      var invrow = document.querySelector("#history .invrow");
       function syncQR() {
-        var h = hcol.offsetHeight;
+        var h = invrow.offsetHeight;
         qrEl.style.width = h + "px";
         qrEl.style.height = h + "px";
       }
-      if (window.ResizeObserver) { new ResizeObserver(syncQR).observe(hcol); }
+      if (window.ResizeObserver) { new ResizeObserver(syncQR).observe(invrow); }
       window.addEventListener("resize", syncQR);
 
       /* 该条目的创建时刻文本(独立于 param,来自 entry.ts) */
@@ -217,10 +235,12 @@
          memo 有值→作为 value;无值→把创建时刻作为灰色 placeholder 提示 */
       function selectEntry(item) {
         selected = item;
+        pendingDelete = null;
+        qrEl.classList.remove("confirm");
         paramEl.value = item.param;
         memoEl.value = item.memo || "";
         memoEl.placeholder = item.memo ? (L.memo_ph || "memo") : (entryTime(item) || (L.memo_ph || "memo"));
-        qrEl.textContent = item.param.slice(-4);
+        qrCodeEl.textContent = item.param.slice(-4);
         renderPickInv();
       }
 
@@ -247,6 +267,48 @@
         return function suppressClickIfHandled() { return timer === null; };
       }
 
+      /* QR 长按 → 确认「新标签打开游戏」;确认按钮点击 = 用当前邀请码开新标签(离线入口) */
+      attachLongPress(qrEl, function () {
+        if (!selected) return;
+        lastLongPress = Date.now();
+        qrEl.classList.add("confirm");
+      });
+      qrOpenBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (Date.now() - lastLongPress < 500) return;   // 吞掉长按松手那次 click
+        if (!selected) return;
+        var g = games[selected.gameId];
+        if (g && g.entry) window.open(g.entry + "?p=" + encodeURIComponent(selected.param), "_blank");
+        qrEl.classList.remove("confirm");
+      });
+      /* 点别处取消 QR / 删除的确认态 */
+      document.addEventListener("click", function (e) {
+        if (Date.now() - lastLongPress < 500) return;
+        if (qrEl.classList.contains("confirm") && !qrEl.contains(e.target)) qrEl.classList.remove("confirm");
+        if (pendingDelete && !(e.target.closest && e.target.closest(".pi-item.confirm"))) { pendingDelete = null; renderPickInv(); }
+      });
+
+      /* 删除某条(供确认后调用):维持原来的重选/清空逻辑 */
+      function deleteAt(idx) {
+        var item = history[idx];
+        var wasSel = (selected === item);
+        history.splice(idx, 1);
+        pendingDelete = null;
+        saveHistory();
+        if (wasSel && history.length) {
+          selectEntry(history[Math.max(0, idx - 1)]);
+        } else {
+          if (wasSel) {                 /* 删空:清 param / memo / QR */
+            selected = null;
+            paramEl.value = "";
+            memoEl.value = "";
+            memoEl.placeholder = (L.memo_ph || "memo");
+            qrCodeEl.textContent = "QR";
+          }
+          renderPickInv();
+        }
+      }
+
       function renderPickInv() {
         var box = document.getElementById("pickinv");
         box.innerHTML = "";
@@ -260,33 +322,27 @@
         history.forEach(function (item, idx) {
           var g = games[item.gameId] || {};
           var card = document.createElement("button");
-          card.className = "pi-item" + (item === selected ? " sel" : "");
+          card.className = "pi-item" + (item === selected ? " sel" : "") + (item === pendingDelete ? " confirm" : "");
 
           var icon = document.createElement("div"); icon.className = "pi-icon"; icon.textContent = g.icon || "🎮";
           var l1 = document.createElement("div"); l1.className = "pi-l1"; l1.textContent = item.param.slice(-4);
           var l2 = document.createElement("div"); l2.className = "pi-l2";
           l2.textContent = entryLabel(item);
-          card.appendChild(icon); card.appendChild(l1); card.appendChild(l2);
+          var del = document.createElement("div"); del.className = "pi-del"; del.textContent = "🗑️";
+          card.appendChild(icon); card.appendChild(l1); card.appendChild(l2); card.appendChild(del);
 
-          var notLongPressed = attachLongPress(card, function () {
-            var wasSel = (selected === item);
-            history.splice(idx, 1);
-            saveHistory();
-            if (wasSel && history.length) {
-              /* 删的是选中项:选前一个;若删的是最前,则选删后的新第 0 个 */
-              selectEntry(history[Math.max(0, idx - 1)]);
-            } else {
-              if (wasSel) {                 /* 删空:清 param / memo / QR */
-                selected = null;
-                paramEl.value = "";
-                memoEl.value = "";
-                memoEl.placeholder = (L.memo_ph || "memo");
-                qrEl.textContent = "QR";
-              }
-              renderPickInv();
-            }
+          /* 长按 → 进入删除确认态(浮出 🗑️),不直接删 */
+          attachLongPress(card, function () {
+            pendingDelete = item;
+            lastLongPress = Date.now();
+            renderPickInv();
           });
-          card.addEventListener("click", function () { if (notLongPressed()) selectEntry(item); });
+          card.addEventListener("click", function () {
+            if (Date.now() - lastLongPress < 500) return;              // 吞掉长按松手那次 click
+            if (item === pendingDelete) { deleteAt(idx); return; }     // 确认态再点 = 删除
+            pendingDelete = null;                                      // 点别的卡:取消待删并选中
+            selectEntry(item);
+          });
           box.appendChild(card);
         });
       }
@@ -333,7 +389,7 @@
          (无原生分享则复制文本) */
       document.querySelector("#history .share").addEventListener("click", function () {
         if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
-        var nick = L.nickname || "Guest";
+        var nick = FairPlay.getNickname();
         var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
           .replace("{nick}", nick).replace("{site}", L.logo || "FairPlay").replace("{code}", selected.param.slice(-4));
         var url = inviteLink(selected);
@@ -343,6 +399,13 @@
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(line + "\n" + url);
         }
+      });
+
+      /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(矩阵游戏说明、邀请条) */
+      window.addEventListener("fairplay:langchange", function () {
+        L = (window.I18N && window.I18N[window.FairPlay.getLang()]) || {};
+        renderMatrix();
+        renderPickInv();
       });
 
       renderMatrix();
