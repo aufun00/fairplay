@@ -1,7 +1,7 @@
 /* FairPlay Service Worker
    版本号 = 缓存名(唯一来源):fairplay.major.minor.patch
    导航/HTML = network-first(联网拿最新,离线回退缓存);静态资源 = cache-first */
-const VERSION = "fairplay.0.0.3";
+const VERSION = "fairplay.0.0.4";
 
 const SHELL = [
   "./",

@@ -319,16 +319,16 @@
       /* 分享按钮:拉起系统分享 "{nickname} invites you to play" + 邀请链接
          (无原生分享则复制文本) */
       document.querySelector("#history .share").addEventListener("click", function () {
-        if (!selected) return;
+        if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
         var nick = L.nickname || "Guest";
         var line = (L.share_msg || "{nick} invites you to play #{code}")
           .replace("{nick}", nick).replace("{code}", selected.param.slice(-4));
-        var msg = (L.logo || "FairPlay") + "\n" + line;   // 站名 + 换行 + 邀请语
-        var url = inviteLink(selected);
+        /* 站名 + 邀请语 + 链接,全折进 text(不单独传 url,避免被 URL 预览卡盖掉第二行) */
+        var text = (L.logo || "FairPlay") + "\n" + line + "\n" + inviteLink(selected);
         if (navigator.share) {
-          navigator.share({ text: msg, url: url }).catch(function () {});
+          navigator.share({ text: text }).catch(function () {});
         } else if (navigator.clipboard) {
-          navigator.clipboard.writeText(msg + " " + url);
+          navigator.clipboard.writeText(text);
         }
       });
 
