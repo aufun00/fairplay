@@ -13,11 +13,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FairPlay">
-  <script>
-    if ("serviceWorker" in navigator) {
-      addEventListener("load", function () { navigator.serviceWorker.register("../sw.js").catch(function () {}); });
-    }
-  </script>
+  <script src="../app.js"></script>
+  <script>FairPlay.registerSW("../sw.js");</script>
 </head>
 <body>
   <div id="frame">
@@ -39,16 +36,6 @@
   <script src="../version.js"></script>
   <script src="../index.lang.en.js"></script>
   <script src="mathdoku.lang.en.js"></script>
-  <script>
-    (function () {
-      var L = (window.I18N && window.I18N.en) || {};
-      document.querySelectorAll("[data-i18n]").forEach(function (el) {
-        var t = L[el.getAttribute("data-i18n")];
-        if (t != null) el.textContent = t;
-      });
-      var ver = document.getElementById("ver");
-      if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
-    })();
-  </script>
+  <script>FairPlay.initTopbar();</script>
 </body>
 </html>

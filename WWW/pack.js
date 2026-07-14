@@ -47,5 +47,38 @@ window.FairPack = (function () {
     return body;
   }
 
-  return { ALPHABET: ALPHABET, encode: encode, decode: decode, addCheck: addCheck, stripCheck: stripCheck };
+  /* Fisher-Yates 均匀洗牌(创建端,Math.random;原地改并返回) */
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  /* digits(每位 0..base-1)→ 当 base 进制大数 → base58 + 校验 */
+  function packBase(digits, base) {
+    const b = BigInt(base);
+    let n = 0n;
+    for (let i = 0; i < digits.length; i++) n = n * b + BigInt(digits[i]);
+    return addCheck(encode(n));
+  }
+
+  /* 反解:base58+校验 → count 个 digit(0..base-1);非法/校验不过/超长 → null */
+  function unpackBase(str, count, base) {
+    const body = stripCheck(str);
+    if (body === null) return null;
+    let n = decode(body);
+    if (n === null) return null;
+    const b = BigInt(base), out = new Array(count);
+    for (let i = count - 1; i >= 0; i--) { out[i] = Number(n % b); n = n / b; }
+    if (n !== 0n) return null;
+    return out;
+  }
+
+  return {
+    ALPHABET: ALPHABET, encode: encode, decode: decode,
+    addCheck: addCheck, stripCheck: stripCheck,
+    shuffle: shuffle, packBase: packBase, unpackBase: unpackBase
+  };
 })();

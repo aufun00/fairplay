@@ -13,11 +13,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FairPlay">
-  <script>
-    if ("serviceWorker" in navigator) {
-      addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
-    }
-  </script>
+  <!-- 通用引导:注册 SW -->
+  <script src="app.js"></script>
+  <script>FairPlay.registerSW("sw.js");</script>
 
   <!-- 版本号(唯一来源)+ 通用编码模块 先加载 -->
   <script src="version.js"></script>
@@ -170,19 +168,8 @@
       var codecs = window.FAIRPLAY_CODECS || {};
       var base = location.origin + location.pathname;   // 邀请码基址(不含 query)
 
-      /* i18n 绑定(文本 + 占位符) */
-      document.querySelectorAll("[data-i18n]").forEach(function (el) {
-        var t = L[el.getAttribute("data-i18n")];
-        if (t != null) el.textContent = t;
-      });
-      document.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
-        var t = L[el.getAttribute("data-i18n-ph")];
-        if (t != null) el.placeholder = t;
-      });
-
-      /* 置顶栏版本号(便于确认是否吃到最新) */
-      var ver = document.getElementById("ver");
-      if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
+      /* 置顶栏:i18n 文本 + 占位符 + 版本号 */
+      window.FairPlay.initTopbar();
 
       /* ---- History(本地持久化)---- */
       var HKEY = "fairplay.history";
