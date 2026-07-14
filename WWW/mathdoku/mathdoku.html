@@ -24,29 +24,28 @@
     <!-- 置顶栏(全站一致);logo 回主页 -->
     <header id="topbar">
       <a class="logo" data-i18n="logo" href="../">FairPlay</a>
-      <span class="spacer"></span>
       <span class="nickname" data-i18n="nickname">Guest</span>
-      <button type="button" data-i18n="exit">Exit</button>
-      <select aria-label="language"><option value="en">EN</option></select>
+      <span class="spacer"></span>
+      <span class="version" id="ver"></span>
     </header>
 
     <!-- 游戏区:除置顶栏外留空 -->
     <main id="stage"></main>
   </div>
 
-  <!-- 先通用置顶栏文本,再游戏专属文本 -->
+  <!-- 版本号 + 通用置顶栏文本 + 游戏专属文本 -->
+  <script src="../version.js"></script>
   <script src="../index.lang.en.js"></script>
   <script src="mathdoku.lang.en.js"></script>
   <script>
     (function () {
-      var lang = "en";
-      var L = (window.I18N && window.I18N[lang]) || {};
+      var L = (window.I18N && window.I18N.en) || {};
       document.querySelectorAll("[data-i18n]").forEach(function (el) {
         var t = L[el.getAttribute("data-i18n")];
         if (t != null) el.textContent = t;
       });
-      var p = new URLSearchParams(location.search).get("p");
-      void p;
+      var ver = document.getElementById("ver");
+      if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
     })();
   </script>
 </body>

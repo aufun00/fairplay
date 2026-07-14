@@ -59,30 +59,32 @@
     <!-- 置顶栏(全站一致);logo 回主页 -->
     <header id="topbar">
       <a class="logo" data-i18n="logo" href="../">FairPlay</a>
-      <span class="spacer"></span>
       <span class="nickname" data-i18n="nickname">Guest</span>
-      <button type="button" data-i18n="exit">Exit</button>
-      <select aria-label="language"><option value="en">EN</option></select>
+      <span class="spacer"></span>
+      <span class="version" id="ver"></span>
     </header>
 
     <!-- 游戏区:除置顶栏外留空 -->
     <main id="stage"></main>
   </div>
 
-  <!-- 通用编码模块 + 本游戏邀请码编解码(供复现棋盘用) -->
+  <!-- 版本号 + 通用编码模块 + 本游戏邀请码编解码(供复现棋盘用) -->
+  <script src="../version.js"></script>
   <script src="../pack.js"></script>
   <script src="match3.invcode.js"></script>
   <!-- 先通用置顶栏文本,再游戏专属文本 -->
   <script src="../index.lang.en.js"></script>
   <script src="match3.lang.en.js"></script>
   <script>
-    /* 置顶栏文本绑定 */
+    /* 置顶栏文本绑定 + 版本号 */
     (function () {
       var L = (window.I18N && window.I18N.en) || {};
       document.querySelectorAll("[data-i18n]").forEach(function (el) {
         var t = L[el.getAttribute("data-i18n")];
         if (t != null) el.textContent = t;
       });
+      var ver = document.getElementById("ver");
+      if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
     })();
   </script>
   <!-- 游戏逻辑 -->
