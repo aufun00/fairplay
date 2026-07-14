@@ -1,12 +1,13 @@
 /* FairPlay Service Worker
    版本号 = 缓存名(唯一来源):fairplay.major.minor.patch
    导航/HTML = network-first(联网拿最新,离线回退缓存);静态资源 = cache-first */
-const VERSION = "fairplay.0.0.1";
+const VERSION = "fairplay.0.0.2";
 
 const SHELL = [
   "./",
   "./index.html",
   "./common.css",
+  "./pack.js",
   "./games.js",
   "./index.lang.en.js",
   "./manifest.webmanifest",
@@ -16,6 +17,7 @@ const SHELL = [
   "./match3/match3.html",
   "./match3/match3.lang.en.js",
   "./match3/match3.invcode.js",
+  "./match3/match3.js",
   "./mathdoku/mathdoku.html",
   "./mathdoku/mathdoku.lang.en.js",
   "./mathdoku/mathdoku.invcode.js"

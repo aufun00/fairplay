@@ -1,7 +1,9 @@
 /* FairPlay — match3 专属语言包(English)。
-   通用置顶栏文本来自上级 ../index.lang.en.js(游戏页先加载它,再加载本文件)。
-   现为空壳,游戏专属文本后续填。 */
+   通用置顶栏文本来自上级 ../index.lang.en.js(游戏页先加载它,再加载本文件)。 */
 window.I18N = window.I18N || {};
 window.I18N.en = Object.assign(window.I18N.en || {}, {
-  // match3_xxx: "...",
+  score: "Score",
+  m3_timeup: "Time's up!",
+  m3_share_btn: "Share result",
+  m3_share: "{nick} scored {score} on match3 — can you beat it?"
 });

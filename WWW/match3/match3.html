@@ -18,6 +18,41 @@
       addEventListener("load", function () { navigator.serviceWorker.register("../sw.js").catch(function () {}); });
     }
   </script>
+
+  <style>
+    #frame { position: relative; }               /* 结果层定位基准 */
+    #stage { display: flex; flex-direction: column; padding: .5rem; gap: .5rem; }
+    #hud { display: flex; align-items: baseline; justify-content: center; gap: 1rem; }
+    #clock { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    #board {
+      width: 100%; aspect-ratio: 1 / 1;
+      display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+      background: var(--line); border: 1px solid var(--line);
+      border-radius: .4rem; overflow: hidden;
+    }
+    .cell {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg); font-size: 1.5rem; line-height: 1;
+      cursor: pointer; -webkit-user-select: none; user-select: none;
+      transition: transform .1s, background .1s;
+    }
+    .cell.sel { background: #2b3550; transform: scale(.88); }
+    #result:not([hidden]) {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, .72);
+    }
+    .rcard {
+      background: var(--bar-bg); border: 1px solid var(--line); border-radius: .6rem;
+      padding: 1.4rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: .9rem;
+    }
+    .rtitle { font-size: 1rem; color: var(--muted); }
+    .rscore { font-size: 1.7rem; font-weight: 700; }
+    #result button {
+      background: var(--accent); color: #fff; border: none; border-radius: .5rem;
+      padding: .6rem 1.1rem; font: inherit; cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <div id="frame">
@@ -34,21 +69,23 @@
     <main id="stage"></main>
   </div>
 
+  <!-- 通用编码模块 + 本游戏邀请码编解码(供复现棋盘用) -->
+  <script src="../pack.js"></script>
+  <script src="match3.invcode.js"></script>
   <!-- 先通用置顶栏文本,再游戏专属文本 -->
   <script src="../index.lang.en.js"></script>
   <script src="match3.lang.en.js"></script>
   <script>
+    /* 置顶栏文本绑定 */
     (function () {
-      var lang = "en";
-      var L = (window.I18N && window.I18N[lang]) || {};
+      var L = (window.I18N && window.I18N.en) || {};
       document.querySelectorAll("[data-i18n]").forEach(function (el) {
         var t = L[el.getAttribute("data-i18n")];
         if (t != null) el.textContent = t;
       });
-      /* 邀请码参数(来自 ?p=...),后续供解码复现同一局 */
-      var p = new URLSearchParams(location.search).get("p");
-      void p;
     })();
   </script>
+  <!-- 游戏逻辑 -->
+  <script src="match3.js"></script>
 </body>
 </html>

@@ -19,6 +19,8 @@
     }
   </script>
 
+  <!-- 通用编码模块(邀请码编解码依赖它)先加载 -->
+  <script src="pack.js"></script>
   <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
   <script src="games.js"></script>
   <script src="match3/match3.invcode.js"></script>
@@ -200,13 +202,12 @@
       if (window.ResizeObserver) { new ResizeObserver(syncQR).observe(hcol); }
       window.addEventListener("resize", syncQR);
 
-      /* 该条目的创建时刻文本(decode 结果) */
+      /* 该条目的创建时刻文本(独立于 param,来自 entry.ts) */
       function entryTime(item) {
-        var g = games[item.gameId] || {};
-        var codec = codecs[g.slug];
-        if (!codec) return "";
-        var dec = codec.decode(item.param);
-        return dec.time + " " + (L.inv_created || "created");
+        if (!item.ts) return "";
+        var d = new Date(item.ts);
+        var p2 = function (n) { return String(n).padStart(2, "0"); };
+        return p2(d.getHours()) + ":" + p2(d.getMinutes()) + ":" + p2(d.getSeconds()) + " " + (L.inv_created || "created");
       }
       /* PickInv 第二行 / 展示用标签:有 memo 显 memo,否则显创建时刻 */
       function entryLabel(item) { return item.memo || entryTime(item); }
@@ -281,7 +282,7 @@
       function startRound(g) {
         var codec = codecs[g.slug];
         var param = codec ? codec.encode() : String(Date.now());
-        history.unshift({ gameId: g.id, param: param, memo: "" });
+        history.unshift({ gameId: g.id, param: param, memo: "", ts: Date.now() });
         saveHistory();
         selectEntry(history[0]);
       }
