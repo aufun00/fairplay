@@ -63,3 +63,18 @@ body{
   background:transparent; color:var(--fg); border:1px solid var(--line);
   border-radius:.4rem; padding:.25rem .5rem; font:inherit; cursor:pointer;
 }
+
+/* 图标按钮(通用):固定方框,与文案长度/语言无关;矢量图标跨浏览器一致。
+   svg.ic 内的 <use> 引用 assets/icons.svg,stroke=currentColor 跟随下方 color。 */
+.iconbtn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:2rem; height:2rem; padding:0;
+  background:transparent; border:none; border-radius:.4rem;
+  color:var(--fg); cursor:pointer;
+}
+.iconbtn:hover{ color:var(--accent); }
+.ic{ width:1.25rem; height:1.25rem; display:block; }
+/* 覆盖上面 #topbar button 的边框/内边距,让置顶栏图标按钮无框 */
+#topbar .iconbtn{ border:none; padding:0; background:transparent; }
+/* #topbar button{color:--fg}(含 id)优先级高于 .iconbtn:hover,故 hover 也需带 #topbar 才能压过 */
+#topbar .iconbtn:hover{ color:var(--accent); }

@@ -1,10 +1,12 @@
-/* FairPlay — 主页语言包(English)+ 通用置顶栏文本(全站共享,游戏页也加载本文件) */
+/* FairPlay — 主页语言包 + 通用置顶栏文本(全站共享,游戏页也加载本文件)。
+   本文件装该页全部语种:每语种一个 I18N.<lang> 块,加语种就往下追加即可(无需改 HTML / SW)。 */
 window.I18N = window.I18N || {};
 window.I18N.en = Object.assign(window.I18N.en || {}, {
   /* 通用置顶栏(全站共享) */
   logo: "FairPlay",
   nickname: "Guest",
   exit: "Exit",
+  lang: "Language",
   home: "Home",
 
   /* 主页 · history / recent */

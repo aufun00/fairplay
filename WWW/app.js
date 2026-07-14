@@ -19,6 +19,11 @@ window.FairPlay.initTopbar = function () {
     var t = L[el.getAttribute("data-i18n-ph")];
     if (t != null) el.placeholder = t;
   });
+  /* 图标按钮无可见文字,用 aria-label 供读屏(键名同 data-i18n) */
+  document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
+    var t = L[el.getAttribute("data-i18n-aria")];
+    if (t != null) el.setAttribute("aria-label", t);
+  });
   var ver = document.getElementById("ver");
   if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
 };
