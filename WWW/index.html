@@ -327,10 +327,10 @@
       document.querySelector("#history .share").addEventListener("click", function () {
         if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
         var nick = L.nickname || "Guest";
-        var line = (L.share_msg || "{nick} invites you to play #{code}")
-          .replace("{nick}", nick).replace("{code}", selected.param.slice(-4));
-        /* 站名 + 邀请语 + 链接,全折进 text(不单独传 url,避免被 URL 预览卡盖掉第二行) */
-        var text = (L.logo || "FairPlay") + "\n" + line + "\n" + inviteLink(selected);
+        var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
+          .replace("{nick}", nick).replace("{site}", L.logo || "FairPlay").replace("{code}", selected.param.slice(-4));
+        /* 邀请语(含项目名)+ 链接;折进 text(不单独传 url,避免被 URL 预览卡盖掉) */
+        var text = line + "\n" + inviteLink(selected);
         if (navigator.share) {
           navigator.share({ text: text }).catch(function () {});
         } else if (navigator.clipboard) {
