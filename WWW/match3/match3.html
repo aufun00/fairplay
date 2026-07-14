@@ -38,7 +38,9 @@
       transition: transform .1s, background .1s;
     }
     .cell.sel { background: #2b3550; transform: scale(.88); }
-    #result:not([hidden]) {
+    @keyframes dropin { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+    #board.dropin .cell { animation: dropin .3s ease both; }
+    #result:not([hidden]), #start:not([hidden]) {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       background: rgba(0, 0, 0, .72);
     }
@@ -48,9 +50,9 @@
     }
     .rtitle { font-size: 1rem; color: var(--muted); }
     .rscore { font-size: 1.7rem; font-weight: 700; }
-    #result button {
+    .rcard button {
       background: var(--accent); color: #fff; border: none; border-radius: .5rem;
-      padding: .6rem 1.1rem; font: inherit; cursor: pointer;
+      padding: .7rem 1.6rem; font: inherit; font-size: 1.05rem; cursor: pointer;
     }
   </style>
 </head>
@@ -61,6 +63,8 @@
       <a class="logo" data-i18n="logo" href="../">FairPlay</a>
       <span class="nickname" data-i18n="nickname">Guest</span>
       <span class="spacer"></span>
+      <button type="button" data-i18n="exit">Exit</button>
+      <select aria-label="language"><option value="en">EN</option></select>
       <span class="version" id="ver"></span>
     </header>
 

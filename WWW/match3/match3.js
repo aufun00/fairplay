@@ -90,6 +90,10 @@
     stage.innerHTML =
       '<div id="hud"><div id="clock">30.0s</div><div id="score">0</div></div>' +
       '<div id="board"></div>' +
+      '<div id="start"><div class="rcard">' +
+        '<div class="rtitle">#' + seedParam.slice(-4) + '</div>' +
+        '<button id="startbtn">' + (L.m3_start || "Start") + '</button>' +
+      '</div></div>' +
       '<div id="result" hidden></div>';
     boardEl = document.getElementById("board");
     clockEl = document.getElementById("clock");
@@ -187,9 +191,18 @@
     document.getElementById("rshare").addEventListener("click", doShare);
   }
 
-  /* ---- 启动:铺盘 → 开局自动消(不计分,好看)→ 计时+放开输入 ---- */
+  /* ---- 启动:先画空棋盘 + Start(不画棋子、不计时,防提前规划)---- */
   function boot() {
-    buildUI(); render();
+    buildUI();  // 棋盘为空;busy=true 屏蔽输入
+    document.getElementById("startbtn").addEventListener("click", begin);
+  }
+  /* 点 Start → 揭示棋子(掉落动画)→ 开局自动消 → 计时+放开输入 */
+  function begin() {
+    var s = document.getElementById("start");
+    if (s) s.hidden = true;
+    render();
+    boardEl.classList.add("dropin");
+    setTimeout(function () { boardEl.classList.remove("dropin"); }, 400);
     stepResolve(false, function () { busy = false; startTimer(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
