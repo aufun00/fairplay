@@ -1,0 +1,17 @@
+{
+  "name": "FairPlay",
+  "short_name": "FairPlay",
+  "description": "Play mini-games fairly — same puzzle, compare scores. Offline-first, no ads, no account.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0c0e",
+  "theme_color": "#14161a",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

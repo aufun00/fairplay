@@ -1,0 +1,43 @@
+/* FairPlay — 全站共享样式(画框 + 置顶栏,唯一来源) */
+:root{
+  --frame-w: min(100vw, calc(100vh / 1.8));
+  --bar-h: 3rem;
+  --bg:#14161a; --bar-bg:#1e222a; --fg:#e8eaed;
+  --muted:#8a9099; --line:#2b303a; --accent:#4a9eff;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{
+  background:#0b0c0e; color:var(--fg);
+  font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex; justify-content:center; align-items:stretch;
+}
+
+/* 手机 1宽:1.8高 画框(桌面居中留边,手机占满) */
+#frame{
+  width:var(--frame-w); max-width:100%;
+  aspect-ratio:1 / 1.8; max-height:100vh;
+  background:var(--bg); display:flex; flex-direction:column;
+  overflow:hidden; box-shadow:0 0 0 1px var(--line);
+}
+
+/* 置顶栏(全站一致) */
+#topbar{
+  height:var(--bar-h); flex:0 0 auto;
+  background:var(--bar-bg); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:.5rem;
+  padding:0 .75rem; padding-top:env(safe-area-inset-top);
+}
+#topbar .logo{
+  font-weight:700; letter-spacing:.3px; white-space:nowrap;
+  color:var(--fg); text-decoration:none;
+}
+#topbar .spacer{ flex:1 1 auto; }
+#topbar .nickname{
+  color:var(--muted); max-width:8rem;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#topbar button, #topbar select{
+  background:transparent; color:var(--fg); border:1px solid var(--line);
+  border-radius:.4rem; padding:.25rem .5rem; font:inherit; cursor:pointer;
+}

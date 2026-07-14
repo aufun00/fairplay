@@ -1,0 +1,18 @@
+# 只发布站点(WWW/)+ 部署工作流。规划文档、素材、私有配置留本地不公开。
+.claude/
+
+# 根目录旧素材(锚定根,避免误伤 WWW/mathdoku/)
+/MathDoku/
+
+design.md
+UX.md
+UX1.md
+review_panel_report.md
+*.dev/
+
+# 根目录随手截图,不入库
+/Screenshot*.png
+
+# OS / editor
+Thumbs.db
+.DS_Store

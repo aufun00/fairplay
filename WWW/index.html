@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FairPlay</title>
+  <link rel="stylesheet" href="common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#14161a">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script>
+    if ("serviceWorker" in navigator) {
+      addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+    }
+  </script>
+
+  <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
+  <script src="games.js"></script>
+  <script src="match3/match3.invcode.js"></script>
+  <script src="mathdoku/mathdoku.invcode.js"></script>
+  <script>
+    /* ---- 路由器:邀请码 aufun00.github.io/fairplay/?g=<id>&p=<param>
+       读 g → 查注册表 → 跳游戏入口(带 p);无 g = 正常显示主页 ---- */
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var g = q.get("g");
+      var games = window.FAIRPLAY_GAMES || {};
+      if (g && games[g]) {
+        var p = q.get("p");
+        location.replace(games[g].entry + (p != null ? ("?p=" + encodeURIComponent(p)) : ""));
+      }
+    })();
+  </script>
+
+  <style>
+    /* ---- 主页专属样式(画框/置顶栏在 common.css) ---- */
+    #content{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; }
+    .block{ padding:.75rem; border-bottom:1px solid var(--line); }
+    .sec-label{ color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.5rem; }
+    .placeholder{ color:var(--muted); font-size:.85rem; padding:.5rem 0; }
+
+    /* history:左 QR(跨 3 行,方形),右 param/memo + Share + PickInv */
+    #history{ display:flex; gap:.75rem; align-items:flex-start; }
+    #history .qr{
+      flex:0 0 auto; align-self:flex-start;
+      border:1px solid var(--line); border-radius:.5rem;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); font-size:.8rem;
+    }
+    #history .hcol{ flex:1 1 auto; display:flex; flex-direction:column; gap:.5rem; min-width:0; }
+    /* 上部:左侧 param/memo 两行,右侧 Share 按钮跨这两行 */
+    #history .invrow{ display:flex; gap:.5rem; align-items:stretch; }
+    #history .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+    #history .invfields input{
+      width:100%; background:var(--bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.4rem;
+      padding:.35rem .5rem; font:inherit;
+    }
+    #history .invfields .param{ color:var(--muted); }
+    #history .share{
+      flex:0 0 auto;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+      padding:.5rem .7rem; font:inherit; cursor:pointer;
+    }
+    #history .pickinv{
+      flex:1 1 auto; display:flex; gap:.5rem; overflow-x:auto;
+      align-items:stretch; min-height:3.5rem;
+    }
+    #history .pi-empty{ color:var(--muted); font-size:.8rem; align-self:center; }
+    /* PickInv 条目:图标 + 末4位 + 备注/创建时刻 */
+    #history .pi-item{
+      flex:0 0 auto; width:4.5rem;
+      display:flex; flex-direction:column; align-items:center; gap:.1rem;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.3rem; font:inherit; cursor:pointer;
+      -webkit-user-select:none; user-select:none;
+    }
+    #history .pi-item.sel{ border-color:var(--accent); }
+    #history .pi-item .pi-icon{ font-size:1.4rem; line-height:1.2; }
+    #history .pi-item .pi-l1{ font-size:.7rem; color:var(--fg); }
+    #history .pi-item .pi-l2{
+      font-size:.62rem; color:var(--muted);
+      max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+
+    /* games:Tab + 矩阵 */
+    .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
+    .tabs button{
+      background:transparent; color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
+    }
+    .tabs button.on{ border-color:var(--accent); color:var(--accent); }
+    .matrix{ display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
+    .matrix .game{
+      display:flex; align-items:center; gap:.5rem; text-align:left; min-width:0;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.6rem; font:inherit; cursor:pointer;
+    }
+    .matrix .game .gi{ font-size:1.6rem; flex:0 0 auto; }
+    .matrix .game .gd{ font-size:.85rem; color:var(--muted); min-width:0; }
+  </style>
+</head>
+<body>
+  <div id="frame">
+    <!-- 置顶栏(占位,先不实现) -->
+    <header id="topbar">
+      <a class="logo" data-i18n="logo" href="./">FairPlay</a>
+      <span class="spacer"></span>
+      <span class="nickname" data-i18n="nickname">Guest</span>
+      <button type="button" data-i18n="exit">Exit</button>
+      <select aria-label="language"><option value="en">EN</option></select>
+    </header>
+
+    <main id="content">
+      <!-- history:QR + 分享 + PickInv(占位) -->
+      <section id="history" class="block">
+        <div class="qr">QR</div>
+        <div class="hcol">
+          <div class="invrow">
+            <div class="invfields">
+              <input class="param" type="text" readonly placeholder="—">
+              <input class="memo" type="text" data-i18n-ph="memo_ph" placeholder="memo">
+            </div>
+            <button class="share" data-i18n="share_btn">Share invite</button>
+          </div>
+          <div class="pickinv" id="pickinv">
+            <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- recent(占位) -->
+      <section id="recent" class="block">
+        <div class="sec-label" data-i18n="sec_recent">Recent</div>
+        <div class="placeholder" data-i18n="ph_recent">— coming soon —</div>
+      </section>
+
+      <!-- games:⚡☕🧠 Tab + 类型 Tab + 矩阵 -->
+      <section id="games" class="block">
+        <div class="tabs cat" id="catTabs">
+          <button data-cat="⚡">⚡</button>
+          <button data-cat="☕">☕</button>
+          <button data-cat="🧠">🧠</button>
+        </div>
+        <div class="tabs type" id="typeTabs">
+          <button>🕹️</button><button>📱</button><button>🃏</button><button>🧩</button><button>🎯</button>
+        </div>
+        <div class="matrix" id="matrix"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 主页语言包(含通用置顶栏文本) -->
+  <script src="index.lang.en.js"></script>
+  <script>
+    (function () {
+      var lang = "en";
+      var L = (window.I18N && window.I18N[lang]) || {};
+      var games = window.FAIRPLAY_GAMES || {};
+      var codecs = window.FAIRPLAY_CODECS || {};
+      var base = location.origin + location.pathname;   // 邀请码基址(不含 query)
+
+      /* i18n 绑定(文本 + 占位符) */
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var t = L[el.getAttribute("data-i18n")];
+        if (t != null) el.textContent = t;
+      });
+      document.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
+        var t = L[el.getAttribute("data-i18n-ph")];
+        if (t != null) el.placeholder = t;
+      });
+
+      /* ---- History(本地持久化)---- */
+      var HKEY = "fairplay.history";
+      function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) { return []; } }
+      function saveHistory() { try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) {} }
+      var history = loadHistory();
+      var selected = null;
+
+      function inviteLink(item) {
+        return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param);
+      }
+
+      var qrEl = document.querySelector("#history .qr");
+      var paramEl = document.querySelector("#history .param");
+      var memoEl = document.querySelector("#history .memo");
+
+      /* QR 保持正方形,边长 = 右侧 hcol 全高(跨 param/memo/PickInv 3 行) */
+      var hcol = document.querySelector("#history .hcol");
+      function syncQR() {
+        var h = hcol.offsetHeight;
+        qrEl.style.width = h + "px";
+        qrEl.style.height = h + "px";
+      }
+      if (window.ResizeObserver) { new ResizeObserver(syncQR).observe(hcol); }
+      window.addEventListener("resize", syncQR);
+
+      /* 该条目的创建时刻文本(decode 结果) */
+      function entryTime(item) {
+        var g = games[item.gameId] || {};
+        var codec = codecs[g.slug];
+        if (!codec) return "";
+        var dec = codec.decode(item.param);
+        return dec.time + " " + (L.inv_created || "created");
+      }
+      /* PickInv 第二行 / 展示用标签:有 memo 显 memo,否则显创建时刻 */
+      function entryLabel(item) { return item.memo || entryTime(item); }
+
+      /* 选中条目 → 填 param(只读)/ memo / QR
+         memo 有值→作为 value;无值→把创建时刻作为灰色 placeholder 提示 */
+      function selectEntry(item) {
+        selected = item;
+        paramEl.value = item.param;
+        memoEl.value = item.memo || "";
+        memoEl.placeholder = item.memo ? (L.memo_ph || "memo") : (entryTime(item) || (L.memo_ph || "memo"));
+        qrEl.textContent = item.param.slice(-4);
+        renderPickInv();
+      }
+
+      /* memo 编辑:input 改模型 + 就地更新选中卡片第二行(不重建,避免吃掉点击),change 存盘 */
+      memoEl.addEventListener("input", function () {
+        if (!selected) return;
+        selected.memo = memoEl.value;
+        var selL2 = document.querySelector("#history .pi-item.sel .pi-l2");
+        if (selL2) selL2.textContent = entryLabel(selected);
+      });
+      memoEl.addEventListener("change", function () { if (selected) saveHistory(); });
+
+      /* 长按删除 */
+      function attachLongPress(el, onLong) {
+        var timer = null;
+        var start = function () { timer = setTimeout(function () { timer = null; onLong(); }, 600); };
+        var cancel = function () { if (timer) { clearTimeout(timer); timer = null; } };
+        el.addEventListener("touchstart", start, { passive: true });
+        el.addEventListener("touchend", cancel);
+        el.addEventListener("touchmove", cancel);
+        el.addEventListener("mousedown", start);
+        el.addEventListener("mouseup", cancel);
+        el.addEventListener("mouseleave", cancel);
+        return function suppressClickIfHandled() { return timer === null; };
+      }
+
+      function renderPickInv() {
+        var box = document.getElementById("pickinv");
+        box.innerHTML = "";
+        if (!history.length) {
+          var e = document.createElement("div");
+          e.className = "pi-empty";
+          e.textContent = L.pick_empty || "No invites yet";
+          box.appendChild(e);
+          return;
+        }
+        history.forEach(function (item, idx) {
+          var g = games[item.gameId] || {};
+          var card = document.createElement("button");
+          card.className = "pi-item" + (item === selected ? " sel" : "");
+
+          var icon = document.createElement("div"); icon.className = "pi-icon"; icon.textContent = g.icon || "🎮";
+          var l1 = document.createElement("div"); l1.className = "pi-l1"; l1.textContent = item.param.slice(-4);
+          var l2 = document.createElement("div"); l2.className = "pi-l2";
+          l2.textContent = entryLabel(item);
+          card.appendChild(icon); card.appendChild(l1); card.appendChild(l2);
+
+          var notLongPressed = attachLongPress(card, function () {
+            history.splice(idx, 1);
+            if (selected === item) selected = null;
+            saveHistory();
+            renderPickInv();
+          });
+          card.addEventListener("click", function () { if (notLongPressed()) selectEntry(item); });
+          box.appendChild(card);
+        });
+      }
+
+      /* 点游戏 = 开一局:encode 生成 param → History 最前插一条(不跳转) */
+      function startRound(g) {
+        var codec = codecs[g.slug];
+        var param = codec ? codec.encode() : String(Date.now());
+        history.unshift({ gameId: g.id, param: param, memo: "" });
+        saveHistory();
+        selectEntry(history[0]);
+      }
+
+      /* ---- games 矩阵:⚡☕🧠 Tab 过滤(类型 Tab 暂为占位)---- */
+      var activeCat = null;
+      function renderMatrix() {
+        var m = document.getElementById("matrix");
+        m.innerHTML = "";
+        Object.keys(games).map(function (k) { return games[k]; })
+          .filter(function (g) { return !activeCat || g.cat === activeCat; })
+          .forEach(function (g) {
+            var b = document.createElement("button");
+            b.className = "game";
+            var gi = document.createElement("span"); gi.className = "gi"; gi.textContent = g.icon;
+            var gd = document.createElement("span"); gd.className = "gd"; gd.textContent = L[g.descKey] || g.slug;
+            b.appendChild(gi); b.appendChild(gd);
+            b.addEventListener("click", function () { startRound(g); });
+            m.appendChild(b);
+          });
+      }
+
+      document.querySelectorAll("#catTabs button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var c = btn.getAttribute("data-cat");
+          activeCat = (activeCat === c) ? null : c;
+          document.querySelectorAll("#catTabs button").forEach(function (x) {
+            x.classList.toggle("on", x.getAttribute("data-cat") === activeCat);
+          });
+          renderMatrix();
+        });
+      });
+
+      /* 分享按钮:拉起系统分享 "{nickname} invites you to play" + 邀请链接
+         (无原生分享则复制文本) */
+      document.querySelector("#history .share").addEventListener("click", function () {
+        if (!selected) return;
+        var nick = L.nickname || "Guest";
+        var msg = (L.share_msg || "{nick} invites you to play").replace("{nick}", nick);
+        var url = inviteLink(selected);
+        if (navigator.share) {
+          navigator.share({ title: L.logo || "FairPlay", text: msg, url: url }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(msg + " " + url);
+        }
+      });
+
+      renderMatrix();
+      renderPickInv();
+      syncQR();
+    })();
+  </script>
+</body>
+</html>
