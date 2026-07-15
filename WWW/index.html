@@ -57,8 +57,6 @@
     /* ---- 主页专属样式(画框/置顶栏在 common.css) ---- */
     #hm_content{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; }
     .block{ padding:.75rem; border-bottom:1px solid var(--line); }
-    .sec-label{ color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.5rem; }
-    .placeholder{ color:var(--muted); font-size:.85rem; padding:.5rem 0; }
 
     /* invite:一行 = 左 QR(方形)+ 中 invfields(param/memo)+ 右 Share(与 QR 等大方形)。
        与下方 #hm_history 视觉相连:去掉本块下分隔线与下内边距 */
@@ -223,9 +221,8 @@
         <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
       </section>
 
-      <!-- recent:最近玩过的游戏(MRU 图标行,点 = 再开一局);空则整块隐藏 -->
+      <!-- recent:最近玩过的游戏(MRU 图标行,点 = 再开一局;无栏目文字);空则整块隐藏 -->
       <section id="hm_recent" class="block" hidden>
-        <div class="sec-label" data-i18n="sec_recent">Recent</div>
         <div class="rec-row" id="hm_recent_row"></div>
       </section>
 

@@ -32,7 +32,6 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   pick_empty: "No invites yet",
   inv_created: "created",
   memo_ph: "memo",
-  sec_recent: "Recent",
 
   /* 主页 · 游戏说明(键名 = 注册表 descKey) */
   game_match3_desc: "Match-3 · clear the board",
@@ -71,7 +70,6 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   pick_empty: "还没有邀请",
   inv_created: "创建",
   memo_ph: "备注",
-  sec_recent: "最近",
 
   /* 主页 · 游戏说明 */
   game_match3_desc: "三消 · 清空棋盘",
