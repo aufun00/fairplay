@@ -171,6 +171,29 @@
     .matrix .game .gname{ font-size:.92rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .matrix .game .gd{ font-size:.76rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
+
+  <!-- ==================== DEBUG ONLY ====================
+    调试用尺寸微调。URL 加 ?s=a,b,c(百分比,100=当前):
+      a = history button 缩放%   b = recent button 缩放%   c = games 按钮高度%
+    例:?s=150,120,130 。不带 s 或 DEBUG=false 时无任何影响。
+    【正式发布前:把 DEBUG 改 false,或直接删除本块】 -->
+  <script>
+    (function () {
+      var DEBUG = true;                 // ← 正式发布改 false(或删掉整块)
+      if (!DEBUG) return;
+      var s = new URLSearchParams(location.search).get("s");
+      if (!s) return;
+      var p = s.split(",").map(function (x) { return parseFloat(x); });
+      var a = p[0], b = p[1], c = p[2], css = "";
+      if (a > 0) css += "#hm_history .pi-item{ zoom:" + (a / 100) + " !important; }\n";
+      if (b > 0) css += "#hm_recent .rec-item{ zoom:" + (b / 100) + " !important; }\n";
+      if (c > 0) css += ".matrix .game{ height:" + (4.19 * c / 100).toFixed(3) + "rem !important; }\n";
+      if (!css) return;
+      var st = document.createElement("style"); st.id = "dbg_scale"; st.textContent = css;
+      document.head.appendChild(st);
+      console.log("[DEBUG] s=" + s + "  a(hist)=" + a + "% b(rec)=" + b + "% c(game-h)=" + c + "%");
+    })();
+  </script>
 </head>
 <body>
   <div id="app_frame">
