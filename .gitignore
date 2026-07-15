@@ -1,8 +1,10 @@
 # 只发布站点(WWW/)+ 部署工作流。规划文档、素材、私有配置留本地不公开。
 .claude/
 
-# 根目录旧素材(锚定根,避免误伤 WWW/mathdoku/)
+# 根目录旧素材 / 参考项目(锚定根,避免误伤 WWW/mathdoku/)
 /MathDoku/
+/mmDoku/
+/Libra.webp
 
 design.md
 UX.md

@@ -51,42 +51,59 @@
     .sec-label{ color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.5rem; }
     .placeholder{ color:var(--muted); font-size:.85rem; padding:.5rem 0; }
 
-    /* history:纵向两排。上排 .htop = 左 QR(跨 param/memo 2 行,方形)+ 右 invrow;下排 PickInv 撑满 */
-    #history{ display:flex; flex-direction:column; gap:.5rem; }
-    #history .htop{ display:flex; gap:.75rem; align-items:flex-start; }
-    #history .qr{
-      flex:0 0 auto; position:relative;
+    /* invite:一行 = 左 QR(方形)+ 中 invfields(param/memo)+ 右 Share(与 QR 等大方形)。
+       与下方 #history 视觉相连:去掉本块下分隔线与下内边距 */
+    #invite{ display:flex; gap:.75rem; align-items:flex-start; border-bottom:0; padding-bottom:0; }
+    #invite .qr{
+      flex:0 0 auto; position:relative; overflow:hidden;
       border:1px solid var(--line); border-radius:.5rem;
       display:flex; align-items:center; justify-content:center;
       color:var(--muted); font-size:.8rem;
     }
+    /* QR 渲染层:选中邀请后画入二维码 canvas;无选中时显示占位 .qr-code */
+    #invite .qr .qr-render{ position:absolute; inset:0; display:none; }
+    #invite .qr.has-qr .qr-render{ display:block; }
+    #invite .qr.has-qr .qr-code{ display:none; }
+    #invite .qr .qr-render canvas{
+      width:100%; height:100%; display:block;
+      image-rendering:pixelated; object-fit:contain;   /* 缩放不糊,方形贴合 */
+    }
+    /* 点 QR → 放大弹窗(便于扫描):白底大二维码 + #code 标注 */
+    .fp-card.qrbig{ gap:.6rem; }
+    .fp-card.qrbig .qr-big{
+      width:min(74vw, 320px); height:min(74vw, 320px);
+      image-rendering:pixelated; display:block; border-radius:.4rem;
+    }
+    .fp-card.qrbig .qr-big-cap{ color:var(--muted); font-size:.9rem; text-align:center; font-variant-numeric:tabular-nums; }
     /* QR 长按 → 确认层:新标签打开游戏 */
-    #history .qr .qr-open{
+    #invite .qr .qr-open{
       position:absolute; inset:0; display:none;
       align-items:center; justify-content:center; text-align:center;
       background:var(--accent); color:#fff; border:none; border-radius:.5rem;
       font:inherit; font-size:.75rem; padding:.2rem; cursor:pointer;
     }
-    #history .qr.confirm .qr-open{ display:flex; }
-    /* invrow:左 param/memo 两行,右 Share 按钮跨这两行 */
-    #history .invrow{ flex:1 1 auto; display:flex; gap:.5rem; align-items:stretch; min-width:0; }
-    #history .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
-    #history .invfields input{
+    #invite .qr.confirm .qr-open{ display:flex; }
+    /* invfields:param/memo 两行,居中占据 QR 与 Share 之间 */
+    #invite .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+    #invite .invfields input{
       width:100%; background:var(--bg); color:var(--fg);
       border:1px solid var(--line); border-radius:.4rem;
       padding:.35rem .5rem; font:inherit;
     }
-    #history .invfields .param{ color:var(--muted); }
-    #history .share{
-      flex:0 0 auto;
+    #invite .invfields .param{ color:var(--muted); }
+    /* share:与 QR 等大的方形图标按钮(尺寸由 JS 同步),标准分享图标 */
+    #invite .share{
+      flex:0 0 auto; padding:0; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
       background:var(--accent); color:#fff; border:none; border-radius:.5rem;
-      padding:.5rem .7rem; font:inherit; cursor:pointer;
     }
-    /* PickInv:撑满整宽、横向滚动;固定预留底部横滚动条空带(padding-bottom),避免滚动条压扁卡片 */
-    #history .pickinv{
+    #invite .share .ic{ width:1.75rem; height:1.75rem; }
+    /* history:邀请历史条,撑满整宽、横向滚动;.block 的 .75rem 下内边距即滚动条预留带,不压卡片。
+       顶部内边距收窄,与上方 #invite 贴合成一组 */
+    #history{
       display:flex; gap:.5rem; align-items:stretch;
       overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
-      min-height:3.5rem; padding-bottom:.55rem;
+      min-height:3.5rem; padding-top:.5rem;
     }
     #history .pi-empty{ color:var(--muted); font-size:.8rem; align-self:center; }
     /* PickInv 条目:图标 + 末4位 + 备注/创建时刻 */
@@ -136,24 +153,25 @@
     <header id="topbar"></header>
 
     <main id="content">
-      <!-- history:上排 [QR(跨2行) + param/memo/Share],下排 PickInv 撑满横滚 -->
+      <!-- invite:QR(跨2行) + param/memo/Share -->
+      <section id="invite" class="block">
+        <div class="qr">
+          <div class="qr-render"></div>
+          <span class="qr-code">QR</span>
+          <button type="button" class="qr-open" data-i18n="qr_open">↗ New tab</button>
+        </div>
+        <div class="invfields">
+          <input class="param" type="text" readonly placeholder="—">
+          <input class="memo" type="text" data-i18n-ph="memo_ph" placeholder="memo">
+        </div>
+        <button type="button" class="share" data-i18n-aria="share_btn" aria-label="Share invite">
+          <svg class="ic" aria-hidden="true"><use href="#share"/></svg>
+        </button>
+      </section>
+
+      <!-- history:邀请历史条(撑满整宽、横向滚动) -->
       <section id="history" class="block">
-        <div class="htop">
-          <div class="qr">
-            <span class="qr-code">QR</span>
-            <button type="button" class="qr-open" data-i18n="qr_open">↗ New tab</button>
-          </div>
-          <div class="invrow">
-            <div class="invfields">
-              <input class="param" type="text" readonly placeholder="—">
-              <input class="memo" type="text" data-i18n-ph="memo_ph" placeholder="memo">
-            </div>
-            <button class="share" data-i18n="share_btn">Share invite</button>
-          </div>
-        </div>
-        <div class="pickinv" id="pickinv">
-          <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
-        </div>
+        <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
       </section>
 
       <!-- recent(占位) -->
@@ -181,6 +199,8 @@
   <script src="index.lang.js"></script>
   <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
   <script src="topbar.js"></script>
+  <!-- QR 库(生成邀请二维码) -->
+  <script src="assets/qr.js"></script>
   <script>
     (function () {
       var lang = window.FairPlay.getLang();
@@ -205,21 +225,21 @@
         return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param);
       }
 
-      var qrEl = document.querySelector("#history .qr");
-      var qrCodeEl = qrEl.querySelector(".qr-code");
+      var qrEl = document.querySelector("#invite .qr");
       var qrOpenBtn = qrEl.querySelector(".qr-open");
-      var paramEl = document.querySelector("#history .param");
-      var memoEl = document.querySelector("#history .memo");
+      var paramEl = document.querySelector("#invite .param");
+      var memoEl = document.querySelector("#invite .memo");
 
-      /* QR 保持正方形,边长 = 右侧 invrow 高(跨 param/memo 2 行) */
-      var invrow = document.querySelector("#history .invrow");
-      function syncQR() {
-        var h = invrow.offsetHeight;
-        qrEl.style.width = h + "px";
-        qrEl.style.height = h + "px";
+      /* QR 与 Share 都是正方形,边长 = 中间 invfields 高(跨 param/memo 2 行) */
+      var invfields = document.querySelector("#invite .invfields");
+      var shareEl = document.querySelector("#invite .share");
+      function syncSquares() {
+        var s = invfields.offsetHeight + "px";
+        qrEl.style.width = s; qrEl.style.height = s;
+        if (shareEl) { shareEl.style.width = s; shareEl.style.height = s; }
       }
-      if (window.ResizeObserver) { new ResizeObserver(syncQR).observe(invrow); }
-      window.addEventListener("resize", syncQR);
+      if (window.ResizeObserver) { new ResizeObserver(syncSquares).observe(invfields); }
+      window.addEventListener("resize", syncSquares);
 
       /* 该条目的创建时刻文本(独立于 param,来自 entry.ts) */
       function entryTime(item) {
@@ -233,6 +253,16 @@
 
       /* 选中条目 → 填 param(只读)/ memo / QR
          memo 有值→作为 value;无值→把创建时刻作为灰色 placeholder 提示 */
+      /* 把邀请链接画成二维码渲染进 QR 框;text 空则清空并回到占位 */
+      function renderQR(text) {
+        var render = qrEl.querySelector(".qr-render");
+        render.innerHTML = "";
+        if (text && window.FairPlay && FairPlay.QR) {
+          try { render.appendChild(FairPlay.QR.toCanvas(text, { ecc: "M" })); qrEl.classList.add("has-qr"); return; } catch (e) {}
+        }
+        qrEl.classList.remove("has-qr");
+      }
+
       function selectEntry(item) {
         selected = item;
         pendingDelete = null;
@@ -240,7 +270,7 @@
         paramEl.value = item.param;
         memoEl.value = item.memo || "";
         memoEl.placeholder = item.memo ? (L.memo_ph || "memo") : (entryTime(item) || (L.memo_ph || "memo"));
-        qrCodeEl.textContent = item.param.slice(-4);
+        renderQR(inviteLink(item));
         renderPickInv();
       }
 
@@ -281,6 +311,28 @@
         if (g && g.entry) window.open(g.entry + "?p=" + encodeURIComponent(selected.param), "_blank");
         qrEl.classList.remove("confirm");
       });
+      /* QR 短按 → 放大二维码弹窗(便于扫描) */
+      qrEl.addEventListener("click", function () {
+        if (Date.now() - lastLongPress < 500) return;    // 吞掉长按松手那次 click
+        if (qrEl.classList.contains("confirm")) return;  // 确认态点击交给 qr-open 按钮
+        if (selected) openQRModal(selected);
+      });
+      function openQRModal(item) {
+        if (!(window.FairPlay && FairPlay.openModal && FairPlay.QR)) return;
+        FairPlay.openModal({
+          dismissible: true,
+          cardClass: "qrbig",
+          build: function (card) {
+            var cv = null;
+            try { cv = FairPlay.QR.toCanvas(inviteLink(item), { ecc: "M", quiet: 4, scale: 10 }); } catch (e) {}
+            if (cv) { cv.className = "qr-big"; card.appendChild(cv); }
+            var cap = document.createElement("div");
+            cap.className = "qr-big-cap";
+            cap.textContent = "#" + item.param.slice(-4);
+            card.appendChild(cap);
+          }
+        });
+      }
       /* 点别处取消 QR / 删除的确认态 */
       document.addEventListener("click", function (e) {
         if (Date.now() - lastLongPress < 500) return;
@@ -303,14 +355,14 @@
             paramEl.value = "";
             memoEl.value = "";
             memoEl.placeholder = (L.memo_ph || "memo");
-            qrCodeEl.textContent = "QR";
+            renderQR(null);
           }
           renderPickInv();
         }
       }
 
       function renderPickInv() {
-        var box = document.getElementById("pickinv");
+        var box = document.getElementById("history");
         box.innerHTML = "";
         if (!history.length) {
           var e = document.createElement("div");
@@ -387,7 +439,7 @@
 
       /* 分享按钮:拉起系统分享 "{nickname} invites you to play" + 邀请链接
          (无原生分享则复制文本) */
-      document.querySelector("#history .share").addEventListener("click", function () {
+      document.querySelector("#invite .share").addEventListener("click", function () {
         if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
         var nick = FairPlay.getNickname();
         var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
@@ -410,7 +462,7 @@
 
       renderMatrix();
       renderPickInv();
-      syncQR();
+      syncSquares();
     })();
   </script>
 </body>
