@@ -26,13 +26,13 @@
   /* ---- UI ---- */
   var boardEl, pairsEl, scoreEl, cells = [];
   function buildUI() {
-    var stage = document.getElementById("stage");
+    var stage = document.getElementById("memory_stage");
     stage.innerHTML =
-      '<div id="hud"><div id="pairs">0/' + PAIRS + '</div><div id="score">0</div></div>' +
-      '<div id="board"></div>';
-    boardEl = document.getElementById("board");
-    pairsEl = document.getElementById("pairs");
-    scoreEl = document.getElementById("score");
+      '<div id="memory_hud"><div id="memory_pairs">0/' + PAIRS + '</div><div id="memory_score">0</div></div>' +
+      '<div id="memory_board"></div>';
+    boardEl = document.getElementById("memory_board");
+    pairsEl = document.getElementById("memory_pairs");
+    scoreEl = document.getElementById("memory_score");
     for (var i = 0; i < N; i++) {
       (function (i) {
         var d = document.createElement("div"); d.className = "card down";

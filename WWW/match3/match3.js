@@ -86,17 +86,17 @@
   var selected = null, score = 0, busy = true, ended = false;
 
   function buildUI() {
-    var stage = document.getElementById("stage");
+    var stage = document.getElementById("match3_stage");
     stage.innerHTML =
-      '<div id="hud"><div id="clock">30.0s</div><div id="score">0</div></div>' +
-      '<div id="board"></div>' +
-      '<div id="start" class="fp-overlay"><div class="fp-card">' +
+      '<div id="match3_hud"><div id="match3_clock">30.0s</div><div id="match3_score">0</div></div>' +
+      '<div id="match3_board"></div>' +
+      '<div id="match3_start" class="fp-overlay"><div class="fp-card">' +
         '<div class="rtitle">#' + seedParam.slice(-4) + '</div>' +
-        '<button id="startbtn">' + (L.m3_start || "Start") + '</button>' +
+        '<button id="match3_startbtn">' + (L.m3_start || "Start") + '</button>' +
       '</div></div>';
-    boardEl = document.getElementById("board");
-    clockEl = document.getElementById("clock");
-    scoreEl = document.getElementById("score");
+    boardEl = document.getElementById("match3_board");
+    clockEl = document.getElementById("match3_clock");
+    scoreEl = document.getElementById("match3_score");
     for (var k = 0; k < SIZE * SIZE; k++) {
       (function (k) {
         var d = document.createElement("div"); d.className = "cell";
@@ -179,11 +179,11 @@
   /* ---- 启动:先画空棋盘 + Start(不画棋子、不计时,防提前规划)---- */
   function boot() {
     buildUI();  // 棋盘为空;busy=true 屏蔽输入
-    document.getElementById("startbtn").addEventListener("click", begin);
+    document.getElementById("match3_startbtn").addEventListener("click", begin);
   }
   /* 点 Start → 揭示棋子(掉落动画)→ 开局自动消 → 计时+放开输入 */
   function begin() {
-    var s = document.getElementById("start");
+    var s = document.getElementById("match3_start");
     if (s) s.hidden = true;
     render();
     boardEl.classList.add("dropin");

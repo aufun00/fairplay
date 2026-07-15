@@ -8,19 +8,19 @@
 (function () {
   var SPRITE =
     '<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">' +
-      '<symbol id="exit" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      '<symbol id="ic_exit" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
       ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>' +
         '<polyline points="16 17 21 12 16 7"/>' +
         '<line x1="21" y1="12" x2="9" y2="12"/>' +
       '</symbol>' +
-      '<symbol id="lang" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      '<symbol id="ic_lang" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
       ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="12" cy="12" r="10"/>' +
         '<line x1="2" y1="12" x2="22" y2="12"/>' +
         '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' +
       '</symbol>' +
-      '<symbol id="share" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      '<symbol id="ic_share" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
       ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="18" cy="5" r="3"/>' +
         '<circle cx="6" cy="12" r="3"/>' +
@@ -28,12 +28,61 @@
         '<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>' +
         '<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' +
       '</symbol>' +
+
+      /* ===== 目录图标(线性,stroke=currentColor;草稿,可迭代)===== */
+      /* L1 大类 */
+      '<symbol id="ic_flash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M13 2 3 14 12 14 11 22 21 10 12 10z"/>' +   // 闪电:<1m
+      '</symbol>' +
+      '<symbol id="ic_short" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/>' +   // 咖啡杯:1~5m
+        '<path d="M7 2v2M11 2v2M15 2v2"/>' +
+      '</symbol>' +
+      '<symbol id="ic_deep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 2h12M6 22h12M7 2v3l5 5 5-5V2M7 22v-3l5-5 5 5v3"/>' +   // 沙漏:长考
+      '</symbol>' +
+      '<symbol id="ic_party" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M3 21l4.5-11 6.5 6.5z"/><path d="M14 10c1-2 3-3 5-2M15 5v-2M19 9l2-1M12 3l1 1"/>' +   // 派对喷筒 + 彩屑
+      '</symbol>' +
+      /* L2 小类 */
+      '<symbol id="ic_arcade" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="2" y="8" width="20" height="9" rx="4.5"/><path d="M7 11v3M5.5 12.5h3"/>' +   // 手柄 + 十字键
+        '<circle cx="15.5" cy="11.5" r="1"/><circle cx="18" cy="13.5" r="1"/>' +
+      '</symbol>' +
+      '<symbol id="ic_puzzle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M10 4a2 2 0 1 1 4 0v1h4v4a2 2 0 1 1 0 4v4h-4v1a2 2 0 1 1-4 0v-1H6v-4a2 2 0 1 0 0-4V5h4z"/>' +   // 拼图块
+      '</symbol>' +
+      '<symbol id="ic_board" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>' +   // 棋盘 3×3
+      '</symbol>' +
+      '<symbol id="ic_match" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 9.8 8.2 12 6 14.2 3.8 12z"/><path d="M12 9.8 14.2 12 12 14.2 9.8 12z"/><path d="M18 9.8 20.2 12 18 14.2 15.8 12z"/>' +   // 三连宝石(消除)
+      '</symbol>' +
+      '<symbol id="ic_card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8 14 11 12 14 10 11z"/>' +   // 牌 + 方块花色
+      '</symbol>' +
+      '<symbol id="ic_word" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 15l2.5-6 2.5 6M9 13h3"/>' +   // 字母牌 A
+      '</symbol>' +
+      '<symbol id="ic_number" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M9 3.5 7.5 20.5M16.5 3.5 15 20.5M4 9h16M3 15h16"/>' +   // # 数字号
+      '</symbol>' +
+      /* 游戏 */
+      '<symbol id="ic_match3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<circle cx="5" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/>' +   // 三连
+      '</symbol>' +
+      '<symbol id="ic_mathdoku" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 4v16M4 12h16"/><path d="M6.5 7.5h3M8 6v3"/>' +   // 数格 + 加号
+      '</symbol>' +
+      '<symbol id="ic_memory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="3" y="6" width="10" height="14" rx="1.6"/><rect x="11" y="4" width="10" height="14" rx="1.6"/>' +   // 两张牌
+      '</symbol>' +
     '</svg>';
 
   function inject() {
-    if (document.getElementById("fp-sprite")) return;   // 去重(多次加载/多页无副作用)
+    if (document.getElementById("ic_sprite")) return;   // 去重(多次加载/多页无副作用)
     var wrap = document.createElement("div");
-    wrap.id = "fp-sprite";
+    wrap.id = "ic_sprite";
     wrap.style.display = "none";
     wrap.setAttribute("aria-hidden", "true");
     wrap.innerHTML = SPRITE;

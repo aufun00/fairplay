@@ -46,7 +46,7 @@ window.FairPlay.applyI18n = function () {
     var t = L[el.getAttribute("data-i18n-aria")];
     if (t != null) el.setAttribute("aria-label", t);
   });
-  var ver = document.getElementById("ver");
+  var ver = document.getElementById("app_ver");
   if (ver && self.FAIRPLAY_VERSION) ver.textContent = "v" + self.FAIRPLAY_VERSION.replace(/^fairplay\./, "");
 };
 
@@ -72,7 +72,7 @@ window.FairPlay.openModal = function (opts) {
   if (opts.dismissible !== false) {
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });   /* 点背板关闭 */
   }
-  (document.getElementById("frame") || document.body).appendChild(ov);   /* 先入 DOM,便于 build 里 focus */
+  (document.getElementById("app_frame") || document.body).appendChild(ov);   /* 先入 DOM,便于 build 里 focus */
   if (typeof opts.build === "function") opts.build(card, close);
   else if (opts.html != null) card.innerHTML = opts.html;
   return { overlay: ov, card: card, close: close };

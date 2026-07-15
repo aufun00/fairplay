@@ -6,12 +6,15 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   m3_start: "Start",
   m3_timeup: "Time's up!",
   m3_share_btn: "Share result",
-  m3_share: "{nick} scored {score} in #{code}"
+  m3_share: "{nick} scored {score} in #{code}",
+  /* 目录条目(inf):home 渲染 L3 用 */
+  match3x86: { name: "Match-3", desc: "Clear the board" }
 });
 window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   score: "分数",
   m3_start: "开始",
   m3_timeup: "时间到!",
   m3_share_btn: "分享成绩",
-  m3_share: "{nick} 在 #{code} 得了 {score} 分"
+  m3_share: "{nick} 在 #{code} 得了 {score} 分",
+  match3x86: { name: "三消", desc: "清空棋盘" }
 });

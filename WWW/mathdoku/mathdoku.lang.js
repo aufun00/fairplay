@@ -2,5 +2,9 @@
    通用置顶栏文本来自上级 ../index.lang.js。现为空壳,后续填。 */
 window.I18N = window.I18N || {};
 window.I18N.en = Object.assign(window.I18N.en || {}, {
-  // mathdoku_xxx: "...",
+  /* 目录条目(inf):home 渲染 L3 用 */
+  mathdoku5: { name: "MathDoku", desc: "Logic grid" }
+});
+window.I18N.zh = Object.assign(window.I18N.zh || {}, {
+  mathdoku5: { name: "MathDoku", desc: "逻辑方格" }
 });

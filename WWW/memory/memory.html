@@ -20,11 +20,11 @@
   <script>FairPlay.registerSW("../sw.js");</script>
 
   <style>
-    #stage { display: flex; flex-direction: column; padding: .5rem; gap: .6rem; }
-    #hud { display: flex; align-items: baseline; justify-content: center; gap: 1.2rem; }
-    #pairs { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    #score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-    #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    #memory_stage { display: flex; flex-direction: column; padding: .5rem; gap: .6rem; }
+    #memory_hud { display: flex; align-items: baseline; justify-content: center; gap: 1.2rem; }
+    #memory_pairs { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #memory_score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    #memory_board { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
     .card {
       aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
       border-radius: .55rem; font-size: 2rem; line-height: 1;
@@ -37,11 +37,11 @@
   </style>
 </head>
 <body>
-  <div id="frame">
+  <div id="app_frame">
     <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
-    <header id="topbar"></header>
+    <header id="app_topbar"></header>
 
-    <main id="stage"></main>
+    <main id="memory_stage"></main>
   </div>
 
   <!-- 版本号 + 通用编码模块 + 本游戏邀请码编解码 -->

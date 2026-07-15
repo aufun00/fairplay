@@ -20,11 +20,11 @@
   <script>FairPlay.registerSW("../sw.js");</script>
 
   <style>
-    #stage { display: flex; flex-direction: column; padding: .5rem; gap: .5rem; }
-    #hud { display: flex; align-items: baseline; justify-content: center; gap: 1rem; }
-    #clock { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    #score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-    #board {
+    #match3_stage { display: flex; flex-direction: column; padding: .5rem; gap: .5rem; }
+    #match3_hud { display: flex; align-items: baseline; justify-content: center; gap: 1rem; }
+    #match3_clock { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #match3_score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    #match3_board {
       width: 100%; aspect-ratio: 1 / 1;
       display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
       background: var(--line); border: 1px solid var(--line);
@@ -38,17 +38,17 @@
     }
     .cell.sel { background: #2b3550; transform: scale(.88); }
     @keyframes dropin { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
-    #board.dropin .cell { animation: dropin .3s ease both; }
+    #match3_board.dropin .cell { animation: dropin .3s ease both; }
   </style>
 </head>
 <body>
-  <div id="frame">
+  <div id="app_frame">
     <!-- 置顶栏(全站一致);logo 回主页 -->
     <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
-    <header id="topbar"></header>
+    <header id="app_topbar"></header>
 
     <!-- 游戏区:除置顶栏外留空 -->
-    <main id="stage"></main>
+    <main id="match3_stage"></main>
   </div>
 
   <!-- 版本号 + 通用编码模块 + 本游戏邀请码编解码(供复现棋盘用) -->

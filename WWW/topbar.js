@@ -1,7 +1,7 @@
 /* FairPlay 置顶栏 —— 结构与内容的唯一来源。
-   各页只留空壳 <header id="topbar"></header>(CSS 已给固定高度,不产生布局跳动),
-   本文件同步注入完整 markup。样式在 common.css(#topbar…),文案走 window.I18N,
-   图标来自 assets/icons.js 的雪碧图(#exit/#lang)。
+   各页只留空壳 <header id="app_topbar"></header>(CSS 已给固定高度,不产生布局跳动),
+   本文件同步注入完整 markup。样式在 common.css(#app_topbar…),文案走 window.I18N,
+   图标来自 assets/icons.js 的雪碧图(#ic_exit/#ic_lang)。
    翻译由各页随后的 FairPlay.applyI18n() 统一处理(整页 data-i18n 扫描)。
    logo 的根链接 (./ 或 ../) 由本脚本自己的 src 自动推断,无需每页配置。 */
 (function () {
@@ -15,13 +15,13 @@
     '<span class="nickname" role="button" tabindex="0"></span>' +
     '<span class="spacer"></span>' +
     '<button type="button" class="iconbtn langbtn" data-i18n-aria="lang" aria-label="Language">' +
-      '<svg class="ic" aria-hidden="true"><use href="#lang"/></svg>' +
+      '<svg class="ic" aria-hidden="true"><use href="#ic_lang"/></svg>' +
       '<span class="lang-code"></span>' +
     '</button>' +
-    '<span class="version" id="ver"></span>' +
+    '<span class="version" id="app_ver"></span>' +
     /* exit 放最后(版本之后) */
     '<button type="button" class="iconbtn" data-i18n-aria="exit" aria-label="Exit">' +
-      '<svg class="ic" aria-hidden="true"><use href="#exit"/></svg>' +
+      '<svg class="ic" aria-hidden="true"><use href="#ic_exit"/></svg>' +
     '</button>';
 
   /* 点昵称 → 弹出编辑窗(输入 + 免责声明 + 已读确认 + 保存/取消)。文案取自当前语言 */
@@ -136,7 +136,7 @@
   }
 
   function mount() {
-    var header = document.getElementById("topbar");
+    var header = document.getElementById("app_topbar");
     if (!header) return;
     header.innerHTML = TOPBAR_HTML;
     var nick = header.querySelector(".nickname");
@@ -161,13 +161,13 @@
   /* 语言就地切换:logo/aria 由 applyI18n 管;缩略字与 nickname 非 data-i18n,这里手动刷新 */
   window.addEventListener("fairplay:langchange", function () {
     if (!window.FairPlay) return;
-    var code = document.querySelector("#topbar .lang-code");
+    var code = document.querySelector("#app_topbar .lang-code");
     if (code) code.textContent = FairPlay.L().lang_short || FairPlay.getLang();
-    var nick = document.querySelector("#topbar .nickname");
+    var nick = document.querySelector("#app_topbar .nickname");
     if (nick) nick.textContent = FairPlay.getNickname();
   });
 
   /* 脚本置于 shell 之后 → 同步注入;万一被放到 head,退回 DOMContentLoaded */
-  if (document.getElementById("topbar")) mount();
+  if (document.getElementById("app_topbar")) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();
