@@ -1,14 +1,24 @@
 /* FairPlay — 全站共享样式(画框 + 置顶栏,唯一来源) */
 :root{
+  color-scheme: light dark;                 /* 原生控件/滚动条跟随系统深浅 */
   --frame-w: min(100vw, calc(100vh / 1.8));
   --bar-h: 3rem;
+  /* 深色(默认;无偏好也用它) */
+  --edge:#0b0c0e;                           /* 画框外底色 */
   --bg:#14161a; --bar-bg:#1e222a; --fg:#e8eaed;
   --muted:#8a9099; --line:#2b303a; --accent:#4a9eff;
+}
+@media (prefers-color-scheme: light){
+  :root{                                     /* 浏览器偏好浅色时切浅 */
+    --edge:#e6e8ec;
+    --bg:#f4f5f7; --bar-bg:#ffffff; --fg:#14161a;
+    --muted:#6b7280; --line:#e2e6eb; --accent:#4a9eff;
+  }
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
 html,body{ height:100%; }
 body{
-  background:#0b0c0e; color:var(--fg);
+  background:var(--edge); color:var(--fg);
   font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   display:flex; justify-content:center; align-items:stretch;
 }
