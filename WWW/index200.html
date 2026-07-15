@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FairPlay btn 200%</title>
+  <link rel="stylesheet" href="common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <!-- 通用引导:注册 SW -->
+  <script src="app.js"></script>
+  <script>FairPlay.registerSW("sw.js");</script>
+
+  <!-- UI 图标 sprite(内联注入,供 <use href="#id"> 引用) -->
+  <script src="assets/icons.js"></script>
+
+  <!-- 版本号(唯一来源)+ 通用编码模块 先加载 -->
+  <script src="version.js"></script>
+  <script src="pack.js"></script>
+  <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
+  <script src="games.js"></script>
+  <script src="match3/match3.invcode.js"></script>
+  <script src="mathdoku/mathdoku.invcode.js"></script>
+  <script src="memory/memory.invcode.js"></script>
+  <script>
+    /* ---- 路由器:邀请码 ?g=<id>&p=<param> → 在 window.GAMES 树里按 id 找游戏,
+       由 key 推路径(key/key.html)+ 拼 cfg + p → 跳游戏;无 g / 找不到 = 显示主页 ---- */
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var g = q.get("g");
+      if (!g || !window.GAMES) return;
+      var id = +g, game = null;
+      window.GAMES.forEach(function (l1) {
+        l1.subs.forEach(function (l2) {
+          l2.games.forEach(function (gm) { if (gm.id === id) game = gm; });
+        });
+      });
+      if (!game) return;
+      var url = game.key + "/" + game.key + ".html";
+      if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+      var p = q.get("p");
+      if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
+      location.replace(url);
+    })();
+  </script>
+
+  <style>
+    /* ---- 主页专属样式(画框/置顶栏在 common.css) ---- */
+    #hm_content{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; }
+    .block{ padding:.75rem; border-bottom:1px solid var(--line); }
+    .sec-label{ color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.5rem; }
+    .placeholder{ color:var(--muted); font-size:.85rem; padding:.5rem 0; }
+
+    /* invite:一行 = 左 QR(方形)+ 中 invfields(param/memo)+ 右 Share(与 QR 等大方形)。
+       与下方 #hm_history 视觉相连:去掉本块下分隔线与下内边距 */
+    #hm_invite{ display:flex; gap:.75rem; align-items:flex-start; border-bottom:0; padding-bottom:0; }
+    #hm_invite .qr{
+      flex:0 0 auto; position:relative; overflow:hidden;
+      border:1px solid var(--line); border-radius:.5rem;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); font-size:.8rem;
+    }
+    /* QR 渲染层:选中邀请后画入二维码 canvas;无选中时显示占位 .qr-code */
+    #hm_invite .qr .qr-render{ position:absolute; inset:0; display:none; }
+    #hm_invite .qr.has-qr .qr-render{ display:block; }
+    #hm_invite .qr.has-qr .qr-code{ display:none; }
+    #hm_invite .qr .qr-render canvas{
+      width:100%; height:100%; display:block;
+      image-rendering:pixelated; object-fit:contain;   /* 缩放不糊,方形贴合 */
+    }
+    /* 点 QR → 放大弹窗(便于扫描):白底大二维码 + #code 标注 */
+    .fp-card.qrbig{ gap:.6rem; }
+    .fp-card.qrbig .qr-big{
+      width:min(74vw, 320px); height:min(74vw, 320px);
+      image-rendering:pixelated; display:block; border-radius:.4rem;
+    }
+    .fp-card.qrbig .qr-big-cap{ color:var(--muted); font-size:.9rem; text-align:center; font-variant-numeric:tabular-nums; }
+    /* QR 长按 → 确认层:新标签打开游戏 */
+    #hm_invite .qr .qr-open{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center; text-align:center;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+      font:inherit; font-size:.75rem; padding:.2rem; cursor:pointer;
+    }
+    #hm_invite .qr.confirm .qr-open{ display:flex; }
+    /* invfields:param/memo 两行,居中占据 QR 与 Share 之间 */
+    #hm_invite .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+    #hm_invite .invfields input{
+      width:100%; background:var(--bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.4rem;
+      padding:.35rem .5rem; font:inherit;
+    }
+    #hm_invite .invfields .param{ color:var(--muted); }
+    /* share:与 QR 等大的方形图标按钮(尺寸由 JS 同步),标准分享图标 */
+    #hm_invite .share{
+      flex:0 0 auto; padding:0; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+    }
+    #hm_invite .share .ic{ width:1.75rem; height:1.75rem; }
+    /* history:邀请历史条,撑满整宽、横向滚动;.block 的 .75rem 下内边距即滚动条预留带,不压卡片。
+       顶部内边距收窄,与上方 #hm_invite 贴合成一组 */
+    #hm_history{
+      display:flex; gap:.5rem; align-items:stretch;
+      overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+      min-height:3.5rem; padding-top:.5rem;
+    }
+    #hm_history .pi-empty{ color:var(--muted); font-size:.8rem; align-self:center; }
+    /* PickInv 条目:图标 + 末4位 + 备注/创建时刻 */
+    #hm_history .pi-item{
+      zoom:2;   /* 对比:history button 放大 200% */
+      position:relative; flex:0 0 auto; width:4.5rem;
+      display:flex; flex-direction:column; align-items:center; gap:.1rem;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.3rem; font:inherit; cursor:pointer;
+      -webkit-user-select:none; user-select:none;
+    }
+    #hm_history .pi-item.sel{ border-color:var(--accent); }
+    #hm_history .pi-item .pi-icon{ font-size:1.4rem; line-height:1.2; }
+    #hm_history .pi-item .pi-icon .ic{ width:1.4rem; height:1.4rem; }
+    #hm_history .pi-item .pi-l1{ font-size:.7rem; color:var(--fg); }
+    #hm_history .pi-item .pi-l2{
+      font-size:.62rem; color:var(--muted);
+      max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    /* 长按删除确认:卡面浮出居中 🗑️,再点一次确认删除;点别处取消 */
+    #hm_history .pi-item .pi-del{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center; font-size:1.4rem;
+      background:rgba(0,0,0,.45); border-radius:.5rem;
+    }
+    #hm_history .pi-item.confirm .pi-del{ display:flex; }
+
+    /* recent:最近玩过的游戏 MRU 图标行(去重/提最前/越界删尾);点 = 再开一局 */
+    #hm_recent .rec-row{ display:flex; gap:.5rem; overflow:hidden; }
+    #hm_recent .rec-item{
+      flex:0 0 auto; padding:0; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:4.5rem; height:4.19rem;                 /* = history 卡 4.5rem × 67px,图标居中 */
+      background:var(--bar-bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.5rem;
+    }
+    #hm_recent .rec-item .ic{ width:1.4rem; height:1.4rem; }   /* = history icon */
+
+    /* games:Tab + 矩阵 */
+    .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
+    .tabs button{
+      background:transparent; color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
+    }
+    .tabs button.on{ border-color:var(--accent); color:var(--accent); }
+    .tabs button:disabled{ opacity:.35; cursor:default; }   /* 空的 L1/L2 灰掉 */
+    .tabs button .ic{ width:1.25rem; height:1.25rem; display:block; }
+    .matrix{ display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
+    .matrix .game{
+      display:flex; align-items:center; gap:.5rem; text-align:left; min-width:0;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.6rem; font:inherit; cursor:pointer;
+      height:4.19rem;                 /* = history 卡 67px(box-sizing:border-box) */
+    }
+    .matrix .game .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
+    .matrix .game .ginfo{ display:flex; flex-direction:column; min-width:0; }
+    .matrix .game .gname{ font-size:.92rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .matrix .game .gd{ font-size:.76rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <div id="app_frame">
+    <!-- 置顶栏(占位,先不实现) -->
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
+    <header id="app_topbar"></header>
+
+    <main id="hm_content">
+      <!-- invite:QR(跨2行) + param/memo/Share -->
+      <section id="hm_invite" class="block">
+        <div class="qr">
+          <div class="qr-render"></div>
+          <span class="qr-code">QR</span>
+          <button type="button" class="qr-open" data-i18n="qr_open">↗ New tab</button>
+        </div>
+        <div class="invfields">
+          <input class="param" type="text" readonly placeholder="—">
+          <input class="memo" type="text" data-i18n-ph="memo_ph" placeholder="memo">
+        </div>
+        <button type="button" class="share" data-i18n-aria="share_btn" aria-label="Share invite">
+          <svg class="ic" aria-hidden="true"><use href="#ic_share"/></svg>
+        </button>
+      </section>
+
+      <!-- history:邀请历史条(撑满整宽、横向滚动) -->
+      <section id="hm_history" class="block">
+        <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
+      </section>
+
+      <!-- recent:最近玩过的游戏(MRU 图标行,点 = 再开一局);空则整块隐藏 -->
+      <section id="hm_recent" class="block" hidden>
+        <div class="sec-label" data-i18n="sec_recent">Recent</div>
+        <div class="rec-row" id="hm_recent_row"></div>
+      </section>
+
+      <!-- games:L1 时长标签 → L2 类型标签 → L3 游戏按钮(全由 window.GAMES 动态生成) -->
+      <section id="hm_games" class="block">
+        <div class="tabs" id="hm_l1"></div>
+        <div class="tabs" id="hm_l2"></div>
+        <div class="matrix" id="hm_list"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 主页语言包(含通用置顶栏文本) -->
+  <script src="index.lang.js"></script>
+  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,inf 键在里面) -->
+  <script src="match3/match3.lang.js"></script>
+  <script src="mathdoku/mathdoku.lang.js"></script>
+  <script src="memory/memory.lang.js"></script>
+  <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
+  <script src="topbar.js"></script>
+  <!-- QR 库(生成邀请二维码) -->
+  <script src="assets/qr.js"></script>
+  <script>
+    (function () {
+      var lang = window.FairPlay.getLang();
+      var L = (window.I18N && window.I18N[lang]) || {};
+      var catalog = window.GAMES || [];
+      var codecs = window.FAIRPLAY_CODECS || {};
+      var base = location.origin + location.pathname;   // 邀请码基址(不含 query)
+
+      /* 置顶栏:i18n 文本 + 占位符 + 版本号 */
+      window.FairPlay.applyI18n();
+
+      /* ---- History(本地持久化)---- */
+      var HKEY = "fairplay.history";
+      function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) { return []; } }
+      function saveHistory() { try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) {} }
+      var history = loadHistory();
+      var selected = null;
+      var pendingDelete = null;   // 待删确认的条目
+      var lastLongPress = 0;      // 最近一次长按触发时刻(吞掉长按松手的那次 click)
+
+      function inviteLink(item) {
+        return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param);
+      }
+
+      var qrEl = document.querySelector("#hm_invite .qr");
+      var qrOpenBtn = qrEl.querySelector(".qr-open");
+      var paramEl = document.querySelector("#hm_invite .param");
+      var memoEl = document.querySelector("#hm_invite .memo");
+
+      /* QR 与 Share 都是正方形,边长 = 中间 invfields 高(跨 param/memo 2 行) */
+      var invfields = document.querySelector("#hm_invite .invfields");
+      var shareEl = document.querySelector("#hm_invite .share");
+      function syncSquares() {
+        var s = invfields.offsetHeight + "px";
+        qrEl.style.width = s; qrEl.style.height = s;
+        if (shareEl) { shareEl.style.width = s; shareEl.style.height = s; }
+      }
+      if (window.ResizeObserver) { new ResizeObserver(syncSquares).observe(invfields); }
+      window.addEventListener("resize", syncSquares);
+
+      /* 该条目的创建时刻文本(独立于 param,来自 entry.ts) */
+      function entryTime(item) {
+        if (!item.ts) return "";
+        var d = new Date(item.ts);
+        var p2 = function (n) { return String(n).padStart(2, "0"); };
+        return p2(d.getHours()) + ":" + p2(d.getMinutes()) + ":" + p2(d.getSeconds()) + " " + (L.inv_created || "created");
+      }
+      /* PickInv 第二行 / 展示用标签:有 memo 显 memo,否则显创建时刻 */
+      function entryLabel(item) { return item.memo || entryTime(item); }
+
+      /* 选中条目 → 填 param(只读)/ memo / QR
+         memo 有值→作为 value;无值→把创建时刻作为灰色 placeholder 提示 */
+      /* 把邀请链接画成二维码渲染进 QR 框;text 空则清空并回到占位 */
+      function renderQR(text) {
+        var render = qrEl.querySelector(".qr-render");
+        render.innerHTML = "";
+        if (text && window.FairPlay && FairPlay.QR) {
+          try { render.appendChild(FairPlay.QR.toCanvas(text, { ecc: "M" })); qrEl.classList.add("has-qr"); return; } catch (e) {}
+        }
+        qrEl.classList.remove("has-qr");
+      }
+
+      function selectEntry(item) {
+        selected = item;
+        pendingDelete = null;
+        qrEl.classList.remove("confirm");
+        paramEl.value = item.param;
+        memoEl.value = item.memo || "";
+        memoEl.placeholder = item.memo ? (L.memo_ph || "memo") : (entryTime(item) || (L.memo_ph || "memo"));
+        renderQR(inviteLink(item));
+        renderPickInv();
+      }
+
+      /* memo 编辑:input 改模型 + 就地更新选中卡片第二行(不重建,避免吃掉点击),change 存盘 */
+      memoEl.addEventListener("input", function () {
+        if (!selected) return;
+        selected.memo = memoEl.value;
+        var selL2 = document.querySelector("#hm_history .pi-item.sel .pi-l2");
+        if (selL2) selL2.textContent = entryLabel(selected);
+      });
+      memoEl.addEventListener("change", function () { if (selected) saveHistory(); });
+
+      /* 长按删除 */
+      function attachLongPress(el, onLong) {
+        var timer = null;
+        var start = function () { timer = setTimeout(function () { timer = null; onLong(); }, 600); };
+        var cancel = function () { if (timer) { clearTimeout(timer); timer = null; } };
+        el.addEventListener("touchstart", start, { passive: true });
+        el.addEventListener("touchend", cancel);
+        el.addEventListener("touchmove", cancel);
+        el.addEventListener("mousedown", start);
+        el.addEventListener("mouseup", cancel);
+        el.addEventListener("mouseleave", cancel);
+        return function suppressClickIfHandled() { return timer === null; };
+      }
+
+      /* QR 长按 → 确认「新标签打开游戏」;确认按钮点击 = 用当前邀请码开新标签(离线入口) */
+      attachLongPress(qrEl, function () {
+        if (!selected) return;
+        lastLongPress = Date.now();
+        qrEl.classList.add("confirm");
+      });
+      qrOpenBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (Date.now() - lastLongPress < 500) return;   // 吞掉长按松手那次 click
+        if (!selected) return;
+        var g = findGame(selected.gameId);
+        if (g) { var u = gamePlayUrl(g); u += (u.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(selected.param); window.open(u, "_blank"); }
+        qrEl.classList.remove("confirm");
+      });
+      /* QR 短按 → 放大二维码弹窗(便于扫描) */
+      qrEl.addEventListener("click", function () {
+        if (Date.now() - lastLongPress < 500) return;    // 吞掉长按松手那次 click
+        if (qrEl.classList.contains("confirm")) return;  // 确认态点击交给 qr-open 按钮
+        if (selected) openQRModal(selected);
+      });
+      function openQRModal(item) {
+        if (!(window.FairPlay && FairPlay.openModal && FairPlay.QR)) return;
+        FairPlay.openModal({
+          dismissible: true,
+          cardClass: "qrbig",
+          build: function (card) {
+            var cv = null;
+            try { cv = FairPlay.QR.toCanvas(inviteLink(item), { ecc: "M", quiet: 4, scale: 10 }); } catch (e) {}
+            if (cv) { cv.className = "qr-big"; card.appendChild(cv); }
+            var cap = document.createElement("div");
+            cap.className = "qr-big-cap";
+            cap.textContent = "#" + item.param.slice(-4);
+            card.appendChild(cap);
+          }
+        });
+      }
+      /* 点别处取消 QR / 删除的确认态 */
+      document.addEventListener("click", function (e) {
+        if (Date.now() - lastLongPress < 500) return;
+        if (qrEl.classList.contains("confirm") && !qrEl.contains(e.target)) qrEl.classList.remove("confirm");
+        if (pendingDelete && !(e.target.closest && e.target.closest(".pi-item.confirm"))) { pendingDelete = null; renderPickInv(); }
+      });
+
+      /* 删除某条(供确认后调用):维持原来的重选/清空逻辑 */
+      function deleteAt(idx) {
+        var item = history[idx];
+        var wasSel = (selected === item);
+        history.splice(idx, 1);
+        pendingDelete = null;
+        saveHistory();
+        if (wasSel && history.length) {
+          selectEntry(history[Math.max(0, idx - 1)]);
+        } else {
+          if (wasSel) {                 /* 删空:清 param / memo / QR */
+            selected = null;
+            paramEl.value = "";
+            memoEl.value = "";
+            memoEl.placeholder = (L.memo_ph || "memo");
+            renderQR(null);
+          }
+          renderPickInv();
+        }
+      }
+
+      function renderPickInv() {
+        var box = document.getElementById("hm_history");
+        box.innerHTML = "";
+        if (!history.length) {
+          var e = document.createElement("div");
+          e.className = "pi-empty";
+          e.textContent = L.pick_empty || "No invites yet";
+          box.appendChild(e);
+          return;
+        }
+        history.forEach(function (item, idx) {
+          var g = findGame(item.gameId) || {};
+          var card = document.createElement("button");
+          card.className = "pi-item" + (item === selected ? " sel" : "") + (item === pendingDelete ? " confirm" : "");
+
+          var icon = document.createElement("div"); icon.className = "pi-icon"; icon.innerHTML = g.icon ? icoSvg(g.icon) : "🎮";
+          var l1 = document.createElement("div"); l1.className = "pi-l1"; l1.textContent = item.param.slice(-4);
+          var l2 = document.createElement("div"); l2.className = "pi-l2";
+          l2.textContent = entryLabel(item);
+          var del = document.createElement("div"); del.className = "pi-del"; del.textContent = "🗑️";
+          card.appendChild(icon); card.appendChild(l1); card.appendChild(l2); card.appendChild(del);
+
+          /* 长按 → 进入删除确认态(浮出 🗑️),不直接删 */
+          attachLongPress(card, function () {
+            pendingDelete = item;
+            lastLongPress = Date.now();
+            renderPickInv();
+          });
+          card.addEventListener("click", function () {
+            if (Date.now() - lastLongPress < 500) return;              // 吞掉长按松手那次 click
+            if (item === pendingDelete) { deleteAt(idx); return; }     // 确认态再点 = 删除
+            pendingDelete = null;                                      // 点别的卡:取消待删并选中
+            selectEntry(item);
+          });
+          box.appendChild(card);
+        });
+      }
+
+      /* 点游戏(L3)= 开一局:codec.encode(cfg 空则不传)→ history 最前插一条 → 选中显 QR */
+      function startRound(game) {
+        var codec = codecs[game.key];
+        var param = codec ? (game.cfg ? codec.encode(game.cfg) : codec.encode()) : String(Date.now());
+        history.unshift({ gameId: game.id, param: param, memo: "", ts: Date.now() });
+        saveHistory();
+        selectEntry(history[0]);
+        touchRecent(game.id);          // 更新最近玩过(去重提最前 + 越界删尾)
+      }
+
+      /* ---- Recent(最近玩过的游戏;MRU:去重 + 提到最前 + 越界删尾;本地持久化)---- */
+      var RKEY = "fairplay.recent";
+      function loadRecent() { try { return JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { return []; } }
+      function saveRecent() { try { localStorage.setItem(RKEY, JSON.stringify(recent)); } catch (e) {} }
+      var recent = loadRecent();
+
+      /* 玩了某游戏:该 id 提到最前(已存在则先摘出),存盘后重渲染裁剪 */
+      function touchRecent(gameId) {
+        var i = recent.indexOf(gameId);
+        if (i >= 0) recent.splice(i, 1);
+        recent.unshift(gameId);
+        saveRecent();
+        renderRecent();
+      }
+      /* 渲染 recent 行:逐个画 icon,再按容器宽裁掉尾部溢出;空则整块隐藏 */
+      function renderRecent() {
+        var sec = document.getElementById("hm_recent");
+        var box = document.getElementById("hm_recent_row");
+        box.innerHTML = "";
+        var before = recent.length;
+        recent = recent.filter(function (id) { return findGame(id); });   // 注册表里没了的丢弃
+        if (recent.length !== before) saveRecent();
+        if (!recent.length) { sec.hidden = true; return; }
+        sec.hidden = false;
+        recent.forEach(function (id) {
+          var g = findGame(id);
+          var b = document.createElement("button"); b.className = "rec-item";
+          b.innerHTML = icoSvg(g.icon);
+          b.addEventListener("click", function () { startRound(g); });
+          box.appendChild(b);
+        });
+        trimRecentToFit(box);
+      }
+      /* 越界裁剪:行 nowrap,内容宽超过可视宽就从尾部删,直到装得下(数据同步删) */
+      function trimRecentToFit(box) {
+        if (!box.clientWidth) return;                 // 未布局(如隐藏)时不裁,避免误删
+        var changed = false;
+        while (box.children.length > 1 && box.scrollWidth > box.clientWidth) {
+          box.removeChild(box.lastElementChild); recent.pop(); changed = true;
+        }
+        if (changed) saveRecent();
+      }
+
+      /* ---- games:L1 时长 → L2 类型 → L3 游戏,全由 window.GAMES 生成;没游戏的标签灰掉 ---- */
+      var curL1 = 0, curL2 = 0;
+      function icoSvg(id) { return '<svg class="ic" aria-hidden="true"><use href="#ic_' + id + '"/></svg>'; }
+      function l2Full(l2) { return l2.games && l2.games.length > 0; }
+      function l1Full(l1) { return l1.subs.some(l2Full); }
+      function firstL2(l1) { for (var i = 0; i < l1.subs.length; i++) if (l2Full(l1.subs[i])) return i; return -1; }
+      /* 在 window.GAMES 树里按 id 找游戏(history 图标 / QR 打开 / 路由都用) */
+      function findGame(id) {
+        for (var i = 0; i < catalog.length; i++)
+          for (var j = 0; j < catalog[i].subs.length; j++) {
+            var gs = catalog[i].subs[j].games;
+            for (var k = 0; k < gs.length; k++) if (gs[k].id === id) return gs[k];
+          }
+        return null;
+      }
+      /* 游戏 → 启动 URL(key 推路径 + 有 cfg 拼 ?c);再由调用方 append p */
+      function gamePlayUrl(game) {
+        var url = game.key + "/" + game.key + ".html";
+        if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+        return url;
+      }
+
+      function tabButton(iconId, on, enabled, onClick) {
+        var b = document.createElement("button");
+        if (on) b.classList.add("on");
+        b.innerHTML = icoSvg(iconId);
+        if (!enabled) b.disabled = true; else b.addEventListener("click", onClick);
+        return b;
+      }
+      function renderL1() {
+        var box = document.getElementById("hm_l1"); box.innerHTML = "";
+        catalog.forEach(function (l1, i) {
+          box.appendChild(tabButton(l1.icon, i === curL1, l1Full(l1), function () {
+            curL1 = i; curL2 = firstL2(catalog[i]); saveTab(); renderL1(); renderL2(); renderList();
+          }));
+        });
+      }
+      function renderL2() {
+        var box = document.getElementById("hm_l2"); box.innerHTML = "";
+        catalog[curL1].subs.forEach(function (l2, i) {
+          box.appendChild(tabButton(l2.icon, i === curL2, l2Full(l2), function () {
+            curL2 = i; saveTab(); renderL2(); renderList();
+          }));
+        });
+      }
+      function renderList() {
+        var box = document.getElementById("hm_list"); box.innerHTML = "";
+        var subs = catalog[curL1].subs;
+        var list = (curL2 >= 0 && subs[curL2]) ? subs[curL2].games : [];
+        list.forEach(function (game) {
+          var t = L[game.inf] || {};
+          var b = document.createElement("button"); b.className = "game";
+          b.innerHTML = icoSvg(game.icon) +
+            '<span class="ginfo"><span class="gname"></span><span class="gd"></span></span>';
+          b.querySelector(".gname").textContent = t.name || game.key;
+          b.querySelector(".gd").textContent = t.desc || "";
+          b.addEventListener("click", function () { startRound(game); });
+          box.appendChild(b);
+        });
+      }
+      /* 记忆选择:存 {sig,l1key,l2key};games.js 改了(结构签名变)则恢复失败 → 回默认 */
+      function catSig() {
+        return catalog.map(function (l1) {
+          return l1.key + ":" + l1.subs.map(function (l2) {
+            return l2.key + "(" + l2.games.map(function (g) { return g.id; }).join(",") + ")";
+          }).join("|");
+        }).join(";");
+      }
+      function saveTab() {
+        try {
+          var l2 = catalog[curL1] && catalog[curL1].subs[curL2];
+          localStorage.setItem("fairplay.tab", JSON.stringify({ sig: catSig(), l1: catalog[curL1].key, l2: l2 ? l2.key : "" }));
+        } catch (e) {}
+      }
+      function restoreTab() {
+        try {
+          var s = JSON.parse(localStorage.getItem("fairplay.tab"));
+          if (!s || s.sig !== catSig()) return false;   // games.js 改过 → 不恢复
+          for (var i = 0; i < catalog.length; i++) {
+            if (catalog[i].key === s.l1 && l1Full(catalog[i])) {
+              for (var j = 0; j < catalog[i].subs.length; j++) {
+                if (catalog[i].subs[j].key === s.l2 && l2Full(catalog[i].subs[j])) { curL1 = i; curL2 = j; return true; }
+              }
+            }
+          }
+        } catch (e) {}
+        return false;
+      }
+      function renderGames() {
+        if (!catalog.length) return;
+        if (!restoreTab()) {                              // 无记忆 / 失效 / catalog 变 → 默认
+          curL1 = 0;
+          for (var i = 0; i < catalog.length; i++) if (l1Full(catalog[i])) { curL1 = i; break; }
+          curL2 = firstL2(catalog[curL1]);
+        }
+        renderL1(); renderL2(); renderList();
+      }
+
+      /* 分享按钮:拉起系统分享 "{nickname} invites you to play" + 邀请链接
+         (无原生分享则复制文本) */
+      document.querySelector("#hm_invite .share").addEventListener("click", function () {
+        if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
+        var nick = FairPlay.getNickname();
+        var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
+          .replace("{nick}", nick).replace("{site}", L.logo || "FairPlay").replace("{code}", selected.param.slice(-4));
+        var url = inviteLink(selected);
+        /* 文本只留干净句子;链接走 url 字段(接收 App 一般渲染成"FairPlay"标题卡) */
+        if (navigator.share) {
+          navigator.share({ text: line, url: url }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(line + "\n" + url);
+        }
+      });
+
+      /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(矩阵游戏说明、邀请条) */
+      window.addEventListener("fairplay:langchange", function () {
+        L = (window.I18N && window.I18N[window.FairPlay.getLang()]) || {};
+        renderGames();
+        renderPickInv();
+      });
+
+      renderGames();
+      renderPickInv();
+      renderRecent();
+      syncSquares();
+    })();
+  </script>
+</body>
+</html>
