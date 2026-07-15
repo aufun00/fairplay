@@ -139,6 +139,17 @@
     }
     #hm_history .pi-item.confirm .pi-del{ display:flex; }
 
+    /* recent:最近玩过的游戏 MRU 图标行(去重/提最前/越界删尾);点 = 再开一局 */
+    #hm_recent .rec-row{ display:flex; gap:.5rem; overflow:hidden; }
+    #hm_recent .rec-item{
+      flex:0 0 auto; padding:0; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:4.5rem; height:4.19rem;                 /* = history 卡 4.5rem × 67px,图标居中 */
+      background:var(--bar-bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.5rem;
+    }
+    #hm_recent .rec-item .ic{ width:1.4rem; height:1.4rem; }   /* = history icon */
+
     /* games:Tab + 矩阵 */
     .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
     .tabs button{
@@ -153,6 +164,7 @@
       display:flex; align-items:center; gap:.5rem; text-align:left; min-width:0;
       background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
       border-radius:.5rem; padding:.6rem; font:inherit; cursor:pointer;
+      height:4.19rem;                 /* = history 卡 67px(box-sizing:border-box) */
     }
     .matrix .game .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
     .matrix .game .ginfo{ display:flex; flex-direction:column; min-width:0; }
@@ -188,10 +200,10 @@
         <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
       </section>
 
-      <!-- recent(占位) -->
-      <section id="hm_recent" class="block">
+      <!-- recent:最近玩过的游戏(MRU 图标行,点 = 再开一局);空则整块隐藏 -->
+      <section id="hm_recent" class="block" hidden>
         <div class="sec-label" data-i18n="sec_recent">Recent</div>
-        <div class="placeholder" data-i18n="ph_recent">— coming soon —</div>
+        <div class="rec-row" id="hm_recent_row"></div>
       </section>
 
       <!-- games:L1 时长标签 → L2 类型标签 → L3 游戏按钮(全由 window.GAMES 动态生成) -->
@@ -418,6 +430,50 @@
         history.unshift({ gameId: game.id, param: param, memo: "", ts: Date.now() });
         saveHistory();
         selectEntry(history[0]);
+        touchRecent(game.id);          // 更新最近玩过(去重提最前 + 越界删尾)
+      }
+
+      /* ---- Recent(最近玩过的游戏;MRU:去重 + 提到最前 + 越界删尾;本地持久化)---- */
+      var RKEY = "fairplay.recent";
+      function loadRecent() { try { return JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { return []; } }
+      function saveRecent() { try { localStorage.setItem(RKEY, JSON.stringify(recent)); } catch (e) {} }
+      var recent = loadRecent();
+
+      /* 玩了某游戏:该 id 提到最前(已存在则先摘出),存盘后重渲染裁剪 */
+      function touchRecent(gameId) {
+        var i = recent.indexOf(gameId);
+        if (i >= 0) recent.splice(i, 1);
+        recent.unshift(gameId);
+        saveRecent();
+        renderRecent();
+      }
+      /* 渲染 recent 行:逐个画 icon,再按容器宽裁掉尾部溢出;空则整块隐藏 */
+      function renderRecent() {
+        var sec = document.getElementById("hm_recent");
+        var box = document.getElementById("hm_recent_row");
+        box.innerHTML = "";
+        var before = recent.length;
+        recent = recent.filter(function (id) { return findGame(id); });   // 注册表里没了的丢弃
+        if (recent.length !== before) saveRecent();
+        if (!recent.length) { sec.hidden = true; return; }
+        sec.hidden = false;
+        recent.forEach(function (id) {
+          var g = findGame(id);
+          var b = document.createElement("button"); b.className = "rec-item";
+          b.innerHTML = icoSvg(g.icon);
+          b.addEventListener("click", function () { startRound(g); });
+          box.appendChild(b);
+        });
+        trimRecentToFit(box);
+      }
+      /* 越界裁剪:行 nowrap,内容宽超过可视宽就从尾部删,直到装得下(数据同步删) */
+      function trimRecentToFit(box) {
+        if (!box.clientWidth) return;                 // 未布局(如隐藏)时不裁,避免误删
+        var changed = false;
+        while (box.children.length > 1 && box.scrollWidth > box.clientWidth) {
+          box.removeChild(box.lastElementChild); recent.pop(); changed = true;
+        }
+        if (changed) saveRecent();
       }
 
       /* ---- games:L1 时长 → L2 类型 → L3 游戏,全由 window.GAMES 生成;没游戏的标签灰掉 ---- */
@@ -543,6 +599,7 @@
 
       renderGames();
       renderPickInv();
+      renderRecent();
       syncSquares();
     })();
   </script>
