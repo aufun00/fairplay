@@ -77,6 +77,10 @@
 
   /* 计时归 control(时钟),阶段/遮盖归 control;active=对局中(可输入)。 */
   var stageEl, boardEl, numpadEl, funcpadEl, modeBtn, scoreEl, timeBox, ctl, active = false;
+  /* 辅助区(分解助手):桌面侧栏,够宽才有;仅 9×9。 */
+  var AUX_W = 340, auxEl = null, auxBtn = null, auxOpen = false;
+  var AX = { cages: {}, segments: [], notes: '', curCage: -1, sel: null };   // 分解助手状态(随本局存)
+  var auxValueEl, auxCountEl, auxExecEl, auxMaskEl, auxDecompEl, auxNotesEl;
 
   function zeros() { var a = [], r, c; for (r = 0; r < N; r++) { a[r] = []; for (c = 0; c < N; c++) a[r][c] = 0; } return a; }
   function emptyNotes() { var a = [], r, c; for (r = 0; r < N; r++) { a[r] = []; for (c = 0; c < N; c++) a[r][c] = {}; } return a; }
@@ -109,7 +113,8 @@
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         values: G.values, notes: notes, mode: G.mode,
         elapsedMs: Math.round(playElapsed),   // 已含罚时(control 时钟)
-        mistakes: G.mistakes, solved: G.solved
+        mistakes: G.mistakes, solved: G.solved, auxOpen: auxOpen,
+        aux: auxEl ? auxSerialize() : null
       }));
     } catch (e) {}
   }
@@ -264,7 +269,13 @@
   }
 
   /* ============ 选择 / 操作(无限撤销重做)============ */
-  function selectCell(r, c) { if (!active) return; G.sel = { r: r, c: c }; renderHighlights(); }
+  function selectCell(r, c) {
+    if (!active) return;
+    G.sel = { r: r, c: c };
+    if (auxEl && AX.sel) { AX.sel = null; auxApplySel(); }   // 点棋盘 → 取消结果区选中(清笼花纹)
+    renderHighlights();
+    if (auxEl) auxOnSelect();                                 // 刷新辅助区控制区(回填当前笼)
+  }
 
   function snapshot(r, c) { return { r: r, c: c, v: G.values[r][c], n: noteList(G.notes[r][c]) }; }
   function pushHist(snap) { G.hist.push(snap); G.redo.length = 0; }
@@ -313,6 +324,196 @@
     stageEl.classList.toggle('note', on); saveGame();
   }
 
+  /* ============ 辅助区(分解助手)—— 桌面右侧栏,够宽才有;9×9 专属。此步:壳 + 💡 宽度门,step2 灌逻辑 ============ */
+  function frameW() { return Math.min(window.innerWidth, window.innerHeight / 1.8); }
+  function auxAvailable() { return N === 9 && window.innerWidth >= frameW() + AUX_W + 16; }   // 放得下 画框 + 辅助区
+  function buildAux(savedAux) {
+    auxEl = document.createElement('div');
+    auxEl.id = 'app_aux'; auxEl.hidden = true;
+    auxEl.innerHTML =
+      '<div id="aux-decomp"></div>' +
+      '<div id="aux-ctrl">' +
+        '<div id="aux-left">' +
+          '<div id="aux-top">' +
+            '<input id="aux-value" type="number" inputmode="numeric" aria-label="value">' +
+            '<select id="aux-count" aria-label="count"></select>' +
+            '<button id="aux-exec">×</button>' +
+          '</div>' +
+          '<div id="aux-mask"></div>' +
+        '</div>' +
+        '<button id="aux-strike" aria-label="strike"><span class="aux-strike-g">S</span></button>' +
+      '</div>' +
+      '<div id="aux-notes" contenteditable="true" spellcheck="false"></div>';
+    document.body.appendChild(auxEl);
+    auxValueEl = document.getElementById('aux-value'); auxCountEl = document.getElementById('aux-count');
+    auxExecEl = document.getElementById('aux-exec'); auxMaskEl = document.getElementById('aux-mask');
+    auxDecompEl = document.getElementById('aux-decomp'); auxNotesEl = document.getElementById('aux-notes');
+    auxMaskEl.style.gridTemplateColumns = 'repeat(' + N + ',1fr)';   // 1..N 屏蔽格
+    for (var v = 1; v <= N; v++) {
+      (function (v) {
+        var b = document.createElement('button'); b.textContent = v; b.setAttribute('data-v', v);
+        b.addEventListener('pointerdown', function (e) { e.preventDefault(); auxToggleMask(v); });
+        auxMaskEl.appendChild(b);
+      })(v);
+    }
+    auxExecEl.onclick = auxExec;
+    auxValueEl.addEventListener('input', function () { var idx = AX.curCage; if (idx >= 0) { var v = parseInt(auxValueEl.value, 10); auxCage(idx).value = isFinite(v) ? v : null; saveGame(); } });
+    auxCountEl.addEventListener('change', function () { var idx = AX.curCage; if (idx >= 0) { auxCage(idx).count = +auxCountEl.value; saveGame(); } });
+    document.getElementById('aux-strike').addEventListener('pointerdown', function (e) { e.preventDefault(); auxNoteStrike(); });
+    auxNotesEl.addEventListener('input', function () { AX.notes = auxNotesEl.innerHTML; saveGame(); });
+    auxInitState(savedAux);
+    auxNotesEl.innerHTML = AX.notes || '';
+    auxRenderResult();
+  }
+
+  /* ---- 分解助手逻辑(从 mmDoku 忠实移植;以 Cage 为单位,随本局存)---- */
+  function auxCage(idx) { if (!AX.cages[idx]) AX.cages[idx] = { masked: [], value: null, count: null }; return AX.cages[idx]; }
+  function auxCurIdx() { if (!G.sel) return -1; var idx = G.cellCage[G.sel.r][G.sel.c]; return dec.cages[idx].op === '=' ? -2 : idx; }   // -2 单格笼,-1 无
+  function auxOnSelect() { if (!auxOpen) return; AX.curCage = auxCurIdx(); auxRenderCtrl(); }   // 结果区不随选格变,只刷新控制区回填
+  function auxRenderCtrl() {
+    var idx = AX.curCage, val = auxValueEl, cnt = auxCountEl, ex = auxExecEl;
+    var masks = auxMaskEl.querySelectorAll('button');
+    if (idx < 0) {
+      val.value = ''; val.disabled = true; cnt.innerHTML = ''; cnt.disabled = true; ex.disabled = true; ex.textContent = '—';
+      masks.forEach(function (b) { b.classList.remove('masked'); b.disabled = true; }); return;
+    }
+    var cg = dec.cages[idx], st = auxCage(idx), op = cg.op, nCells = cg.cells.length, twoOnly = (op === '-' || op === '/');
+    val.disabled = false; ex.disabled = false; ex.textContent = OP_SYM[op] || '?';
+    val.value = (st.value == null ? cg.target : st.value);
+    cnt.innerHTML = ''; var hi = twoOnly ? 2 : nCells;
+    for (var k = 2; k <= hi; k++) { var o = document.createElement('option'); o.value = k; o.textContent = k; cnt.appendChild(o); }
+    var cv = (st.count == null ? (twoOnly ? 2 : nCells) : st.count); cv = Math.max(2, Math.min(hi, cv)); cnt.value = String(cv); cnt.disabled = twoOnly;
+    masks.forEach(function (b) { var v = +b.getAttribute('data-v'); b.disabled = false; b.classList.toggle('masked', st.masked.indexOf(v) >= 0); });
+  }
+  function auxFmt(op, r, value) {
+    if (op === '*') return r.join('×') + 'Σ' + r.reduce(function (a, b) { return a + b; }, 0);
+    if (op === '+') return r.join('+') + '=' + value;
+    if (op === '-') return r[0] + '−' + r[1] + '=' + value;
+    return r[0] + '÷' + r[1] + '=' + value;
+  }
+  function auxAnchor(ci) { var cells = dec.cages[ci].cells, b = cells[0]; for (var i = 0; i < cells.length; i++) { var cc = cells[i]; if (cc[0] < b[0] || (cc[0] === b[0] && cc[1] < b[1])) b = cc; } return b; }
+  function auxIdxLabel(ci) { var a = auxAnchor(ci); return String.fromCharCode(65 + a[1]) + (a[0] + 1); }   // 字母=列、数字=行
+  function auxIsSel(si, row) { return !!AX.sel && AX.sel.seg === si && AX.sel.row === row; }
+  function auxUpdateLinked() {
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) G.cellEls[r][c].classList.remove('cage-linked');
+    if (AX.sel) { var ci = AX.segments[AX.sel.seg].cageIdx; dec.cages[ci].cells.forEach(function (rc) { G.cellEls[rc[0]][rc[1]].classList.add('cage-linked'); }); }
+  }
+  function auxSegBtn(txt, disabled, fn) {
+    var b = document.createElement('button'); b.className = 'seg-btn'; b.textContent = txt;
+    if (disabled) b.disabled = true; else b.addEventListener('click', function (e) { e.stopPropagation(); fn(); });
+    return b;
+  }
+  function auxRowBtns(si, row) {
+    var g = document.createElement('span'); g.className = 'seg-btns';
+    if (row === -1) g.append(auxSegBtn('🔼', si === 0, function () { auxMoveSeg(si, -1); }), auxSegBtn('🔽', si === AX.segments.length - 1, function () { auxMoveSeg(si, 1); }), auxSegBtn('🗑️', false, function () { auxDelSeg(si); }));
+    else g.appendChild(auxSegBtn('🗑️', false, function () { auxDelRow(si, row); }));
+    return g;
+  }
+  function auxApplySel() {   // 就地更新选中(不重建 DOM,保住结果行 dblclick)
+    var box = auxDecompEl;
+    box.querySelectorAll('.sel').forEach(function (el) { el.classList.remove('sel'); var g = el.querySelector('.seg-btns'); if (g) g.remove(); });
+    var s = AX.sel;
+    if (s) { var el = box.querySelector('[data-seg="' + s.seg + '"][data-row="' + s.row + '"]'); if (el) { el.classList.add('sel'); el.appendChild(auxRowBtns(s.seg, s.row)); } }
+    auxUpdateLinked();
+  }
+  function auxToggleSel(si, row) { AX.sel = auxIsSel(si, row) ? null : { seg: si, row: row }; auxApplySel(); saveGame(); }
+  function auxMoveSeg(si, dir) { var j = si + dir, segs = AX.segments; if (j < 0 || j >= segs.length) return; var t = segs[si]; segs[si] = segs[j]; segs[j] = t; AX.sel = { seg: j, row: -1 }; auxRenderResult(); saveGame(); }
+  function auxDelSeg(si) { AX.segments.splice(si, 1); AX.sel = null; auxRenderResult(); saveGame(); }
+  function auxDelRow(si, ri) { var sg = AX.segments[si]; sg.results.splice(ri, 1); sg.struck = sg.struck.filter(function (x) { return x !== ri; }).map(function (x) { return x > ri ? x - 1 : x; }); AX.sel = null; auxRenderResult(); saveGame(); }
+  function auxToggleStruck(si, ri) { var sg = AX.segments[si]; var p = sg.struck.indexOf(ri); if (p < 0) sg.struck.push(ri); else sg.struck.splice(p, 1); auxRenderResult(); saveGame(); }
+  function auxRenderResult() {
+    var box = auxDecompEl; box.innerHTML = ''; var segs = AX.segments;
+    if (!segs.length) { box.innerHTML = '<div class="aux-hint">' + esc(L.md_aux_hint || "Pick a cell, then decompose in the panel below — results collect here.") + '</div>'; auxUpdateLinked(); return; }
+    segs.forEach(function (sg, si) {
+      var wrap = document.createElement('div'); wrap.className = 'seg';
+      var h = document.createElement('div'); h.className = 'seg-h'; h.setAttribute('data-seg', si); h.setAttribute('data-row', -1);
+      var cgi = dec.cages[sg.cageIdx];
+      var hi = document.createElement('span'); hi.className = 'seg-h-txt';
+      hi.textContent = auxIdxLabel(sg.cageIdx) + ' · ' + cgi.target + (OP_SYM[sg.op] || '') + ' · ' + sg.value + ' ×' + sg.count; h.appendChild(hi);
+      h.addEventListener('click', function () { auxToggleSel(si, -1); }); wrap.appendChild(h);
+      if (!sg.results.length) { var e = document.createElement('div'); e.className = 'aux-empty'; e.textContent = (L.md_aux_none || "no solution"); wrap.appendChild(e); }
+      else sg.results.forEach(function (r, ri) {
+        var d = document.createElement('div'); d.className = 'ln' + (sg.struck.indexOf(ri) >= 0 ? ' struck' : ''); d.setAttribute('data-seg', si); d.setAttribute('data-row', ri);
+        var tx = document.createElement('span'); tx.className = 'ln-txt'; tx.textContent = auxFmt(sg.op, r, sg.value); d.appendChild(tx);
+        d.addEventListener('click', function () { auxToggleSel(si, ri); }); d.addEventListener('dblclick', function () { auxToggleStruck(si, ri); }); wrap.appendChild(d);
+      });
+      box.appendChild(wrap);
+    });
+    auxApplySel();
+  }
+  function auxToggleMask(v) {
+    var idx = AX.curCage; if (idx < 0) return; var st = auxCage(idx); var p = st.masked.indexOf(v);
+    if (p < 0) st.masked.push(v); else st.masked.splice(p, 1);
+    var b = auxMaskEl.querySelector('button[data-v="' + v + '"]'); if (b) b.classList.toggle('masked'); saveGame();   // 只影响下次分解,不动历史段
+  }
+  /* 分解器(从 core.mjs 移植):op×÷ 两数、+* 非减多重集;masked 排除、maxV=N */
+  function decompose(op, value, count, masked, maxV) {
+    maxV = maxV || 9;
+    var mset = {}, mi; if (masked) for (mi = 0; mi < masked.length; mi++) mset[masked[mi]] = 1;
+    var allowed = [], v; for (v = 1; v <= maxV; v++) if (!mset[v]) allowed.push(v);
+    var out = [], a, b, big, small;
+    if (op === '-') {
+      for (a = 0; a < allowed.length; a++) for (b = 0; b < allowed.length; b++) { big = allowed[a]; small = allowed[b]; if (big > small && big - small === value) out.push([big, small]); }
+      return out;
+    }
+    if (op === '/') {
+      for (a = 0; a < allowed.length; a++) for (b = 0; b < allowed.length; b++) { big = allowed[a]; small = allowed[b]; if (big === small * value) out.push([big, small]); }
+      return out;
+    }
+    var add = op === '+';
+    function rec(startIdx, remain, acc, cur) {
+      if (remain === 0) { if (cur === value) out.push(acc.slice()); return; }
+      for (var i = startIdx; i < allowed.length; i++) {
+        var vv = allowed[i], nv = add ? cur + vv : cur * vv;
+        if (nv > value) break;
+        acc.push(vv); rec(i, remain - 1, acc, nv); acc.pop();
+      }
+    }
+    rec(0, count, [], add ? 0 : 1);
+    return out;
+  }
+  function auxExec() {
+    var idx = AX.curCage; if (idx < 0) return; var cg = dec.cages[idx], st = auxCage(idx);
+    var value = parseInt(auxValueEl.value, 10), count = parseInt(auxCountEl.value, 10);
+    if (!isFinite(value) || value < 1) return;
+    st.value = value; st.count = count;
+    var results = decompose(cg.op, value, count, st.masked, N);
+    AX.segments.push({ cageIdx: idx, op: cg.op, value: value, count: count, results: results, struck: [] });   // 追加到尾部
+    auxRenderResult(); saveGame();
+  }
+  function noteFirstStruck() {
+    var sel = window.getSelection(); if (!sel.rangeCount) return false; var r = sel.getRangeAt(0); var node = r.startContainer; var el = node.nodeType === 3 ? node.parentElement : node;
+    while (el && el !== auxNotesEl) { if (/^(S|STRIKE|DEL)$/.test(el.tagName)) return true; var td = (getComputedStyle(el).textDecorationLine || getComputedStyle(el).textDecoration || ''); if (td.indexOf('line-through') >= 0) return true; el = el.parentElement; }
+    return false;
+  }
+  function auxNoteStrike() {
+    var sel = window.getSelection(); if (!sel.rangeCount || sel.isCollapsed) return;
+    var want = !noteFirstStruck(); document.execCommand('strikeThrough'); if (document.queryCommandState('strikeThrough') !== want) document.execCommand('strikeThrough');
+    AX.notes = auxNotesEl.innerHTML; saveGame();
+  }
+  function auxSerialize() {
+    var cages = {}; for (var k in AX.cages) { var c = AX.cages[k]; cages[k] = { masked: c.masked, value: c.value, count: c.count }; }
+    var segments = AX.segments.map(function (s) { return { cageIdx: s.cageIdx, op: s.op, value: s.value, count: s.count, results: s.results, struck: s.struck }; });
+    return { cages: cages, segments: segments, notes: AX.notes };
+  }
+  function auxInitState(a) {
+    AX = { cages: {}, segments: [], notes: '', curCage: -1, sel: null };
+    if (a) {
+      AX.notes = a.notes || '';
+      for (var k in (a.cages || {})) { var c = a.cages[k]; AX.cages[k] = { masked: c.masked || [], value: (c.value == null ? null : c.value), count: (c.count == null ? null : c.count) }; }
+      if (Array.isArray(a.segments)) AX.segments = a.segments.map(function (s) { return { cageIdx: s.cageIdx, op: s.op, value: s.value, count: s.count, results: (s.results || []).map(function (r) { return r.slice(); }), struck: (s.struck || []).slice() }; });
+    }
+  }
+
+  function applyAux() {
+    var open = auxOpen && auxAvailable();
+    if (auxEl) auxEl.hidden = !open;
+    document.body.classList.toggle('aux-open', open);
+    if (auxBtn) auxBtn.classList.toggle('on', open);
+  }
+  function toggleAux() { auxOpen = !auxOpen; applyAux(); saveGame(); }
+  function refreshAux() { if (auxBtn) auxBtn.hidden = !auxAvailable(); applyAux(); }   // 窗口变窄:藏 💡 + 收面板
+
   /* ============ 控制栏接线:run/pause/成绩/结束 ============ */
   function finalScore() { var BASE = (N <= 5 ? 600 : 3600); return Math.max(0, BASE - Math.round(totalMs() / 1000)); }
   function paintScore() {   // 对局中显失误数,通关后显最终分(成绩框 = 游戏输出口)
@@ -349,6 +550,7 @@
             '<button class="md_key md_fkey" id="md_erase" aria-label="' + esc(L.md_erase || "Erase") + '">🗑️</button>' +
             '<button class="md_key md_fkey" id="md_undo" aria-label="' + esc(L.md_undo || "Undo") + '">↩️</button>' +
             '<button class="md_key md_fkey" id="md_redo" aria-label="' + esc(L.md_redo || "Redo") + '">↪️</button>' +
+            (N === 9 ? '<span class="md_key blank"></span><button class="md_key md_fkey" id="md_aux" aria-label="' + esc(L.md_aux || "Helper") + '">💡</button>' : '') +   // 第3行第2列:弹出/收回辅助区
           '</div>' +
         '</div>' +
       '</div>';
@@ -363,6 +565,8 @@
     document.getElementById('md_erase').addEventListener('click', delCell);
     document.getElementById('md_undo').addEventListener('click', undo);
     document.getElementById('md_redo').addEventListener('click', redo);
+    if (document.getElementById('md_aux')) document.getElementById('md_aux').addEventListener('click', toggleAux);
+    window.addEventListener('resize', refreshAux);
 
     document.addEventListener('keydown', function (e) {
       var t = e.target;   // 焦点在可编辑处时键盘留给它,不投给棋盘
@@ -396,6 +600,12 @@
     ctl.setTimer({ mode: "up" });   // 正计、无限(通关由游戏逻辑判;罚时走 addPenalty)
     scoreEl = document.getElementById('app_ctl_score');
     timeBox = document.getElementById('app_ctl_time');
+    auxOpen = !!(saved && saved.auxOpen);
+    if (N === 9) {                          // 辅助区仅 9×9
+      buildAux(saved && saved.aux);
+      auxBtn = document.getElementById('md_aux');
+      refreshAux();                         // 按宽度显/隐 💡 + 应用存档的开合
+    }
     paintScore();
     if (G.solved) endGame();   // 已通关的存档 → 直接出结果(禁用按钮)
   }
