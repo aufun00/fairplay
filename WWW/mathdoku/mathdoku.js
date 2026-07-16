@@ -8,13 +8,14 @@
   var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.mathdoku;
   var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
 
-  /* ---- 取种子:无 ?p / 解码失败 → 回主页 ---- */
-  var p = new URLSearchParams(location.search).get("p");
-  var dec = (p && codec) ? codec.decode(p) : null;
+  /* ---- 取种子:无 ?p / 解码失败 → 回主页。N(尺寸)来自 cfg(?c=N,难度),不在码里 ---- */
+  var q = new URLSearchParams(location.search);
+  var p = q.get("p");
+  var N = parseInt((q.get("c") || "").split(",")[0], 10);
+  var dec = (p && codec && N >= 3 && N <= 9) ? codec.decode(p, N) : null;
   if (!dec) { location.replace("../"); return; }
   var seedParam = p;
 
-  var N = dec.N;
   var SAVE_KEY = "fairplay.mathdoku." + seedParam;
   var OP_SYM = { '+': '+', '-': '−', '*': '×', '/': '÷', '=': '' };
 
@@ -530,7 +531,7 @@
     var sc = finalScore();
     var line = (L.game_share || "{nick} scored {score} in {game} # {code}")
       .replace("{nick}", FairPlay.getNickname()).replace("{score}", sc)
-      .replace("{game}", (L.game_name || "MathDoku") + " " + dec.N).replace("{code}", seedParam.slice(-4));
+      .replace("{game}", (L.game_name || "MathDoku") + " " + N).replace("{code}", seedParam.slice(-4));
     ctl.end("done", { title: L.md_win || "Solved!", shareText: (L.logo || "FairPlay") + "\n" + line });
   }
 

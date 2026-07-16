@@ -1,7 +1,8 @@
 /* FairPlay — mathdoku 邀请码编解码(从 mmDoku/_dev/core.mjs 移植,去 ES module、包进 IIFE)。
    模型:一致性靠「把幻方(拉丁方解)+ 笼形/运算 打进 param(ShareCode)」,不靠种子。
      encode(cfg="N,difficulty"):freshSeed 造 rng → generate 造题 → encodeShareCode 打包。种子一次性、每次不同、不存。
-     decode(param):decodeShareCode 纯整数还原 { N, difficulty, solution, cages };非法/校验不过 → null。
+     decode(param, N):decodeShareCode 还原 { solution, cages }(目标由解推导);N 来自 cfg、不在码里;非法 → null。
+   编码统一 FairPack base58(pack.js),无版本号;iCode = 笼边界 + 笼算符 + 解。
    注:colorCages/decompose 属渲染/提示,做游戏本体那步再补,这里只管编解码 + 造题。 */
 (function () {
   "use strict";
@@ -231,9 +232,7 @@
     return { N: N, difficulty: difficulty, solution: solution, cages: cages };
   }
 
-  /* ============ ShareCode (版本化编码表 + 打包解棋盘/笼子) ============ */
-  var ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz_=+^$!()';
-  var VERSION = 1;
+  /* ============ ShareCode (位流打包 → FairPack base58 + 校验;字符集统一、无版本号)============ */
   var OPS2 = ['+', '-', '*', '/'];
   var FACT = (function () { var f = [1]; for (var i = 1; i <= 12; i++) f[i] = f[i - 1] * i; return f; })();
 
@@ -261,41 +260,31 @@
 
   function BitWriter() { this.bits = []; }
   BitWriter.prototype.write = function (value, n) { for (var i = n - 1; i >= 0; i--) this.bits.push((value >> i) & 1); };
-  BitWriter.prototype.toChars = function () {
-    var out = [];
-    for (var i = 0; i < this.bits.length; i += 6) {
-      var v = 0;
-      for (var j = 0; j < 6; j++) v = (v << 1) | (this.bits[i + j] || 0);
-      out.push(ALPHABET[v]);
-    }
-    return out.join('');
-  };
-  function BitReader(chars) {
-    this.bits = [];
-    for (var idx = 0; idx < chars.length; idx++) {
-      var v = ALPHABET.indexOf(chars[idx]);
-      for (var j = 5; j >= 0; j--) this.bits.push((v >> j) & 1);
-    }
-    this.pos = 0;
-  }
+  function BitReader(bits) { this.bits = bits; this.pos = 0; }
   BitReader.prototype.read = function (n) { var v = 0; for (var i = 0; i < n; i++) v = (v << 1) | (this.bits[this.pos++] || 0); return v; };
+
+  /* 位流 ↔ base58(复用 FairPack;前置 1 位哨兵保住长度,含前导/末尾 0)。字符集统一,无版本号 */
+  function bitsToB58(bits) {
+    var n = 1n;   // 哨兵
+    for (var i = 0; i < bits.length; i++) n = (n << 1n) | BigInt(bits[i]);
+    return FairPack.addCheck(FairPack.encode(n));
+  }
+  function b58ToBits(str) {
+    var body = FairPack.stripCheck(str); if (body === null) return null;
+    var n = FairPack.decode(body); if (n === null || n <= 1n) return null;
+    var bits = []; while (n > 1n) { bits.push(Number(n & 1n)); n = n >> 1n; } bits.reverse(); return bits;
+  }
 
   function cellCageGrid(N, cages) {
     var g = Array.from({ length: N }, function () { return Array(N).fill(-1); });
     cages.forEach(function (cg, i) { cg.cells.forEach(function (rc) { g[rc[0]][rc[1]] = i; }); });
     return g;
   }
-  function checksumChar(s) {
-    var sum = 0;
-    for (var i = 0; i < s.length; i++) sum = (sum + ALPHABET.indexOf(s[i])) % 64;
-    return ALPHABET[sum];
-  }
 
+  /* iCode 本体 = 笼边界 + 笼算符 + 解(拉丁方排列秩)。N 来自 cfg 不入码;难度游戏不用、不存;目标由解推导 */
   function encodeShareCode(puzzle) {
-    var N = puzzle.N, difficulty = puzzle.difficulty, solution = puzzle.solution, cages = puzzle.cages;
+    var N = puzzle.N, solution = puzzle.solution, cages = puzzle.cages;
     var w = new BitWriter();
-    w.write(N, 4);
-    w.write(difficulty, 3);
     var cg = cellCageGrid(N, cages);
     for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
       if (c < N - 1) w.write(cg[r][c] === cg[r][c + 1] ? 1 : 0, 1);
@@ -310,26 +299,18 @@
     });
     var solBits = bitsForCount(FACT[N]);
     for (var rr = 0; rr < N; rr++) w.write(rankPerm(solution[rr]), solBits);
-    var payload = w.toChars();
-    var head = ALPHABET[VERSION] + payload;
-    return head + checksumChar(head);
+    return bitsToB58(w.bits);
   }
 
   function UF(n) { this.p = Array.from({ length: n }, function (_, i) { return i; }); }
   UF.prototype.find = function (x) { while (this.p[x] !== x) { this.p[x] = this.p[this.p[x]]; x = this.p[x]; } return x; };
   UF.prototype.union = function (a, b) { this.p[this.find(a)] = this.find(b); };
 
-  function decodeShareCode(code) {
-    if (typeof code !== 'string' || code.length < 3) throw new Error('交换码无效');
-    for (var i = 0; i < code.length; i++) if (ALPHABET.indexOf(code[i]) < 0) throw new Error('交换码无效');
-    var head = code.slice(0, -1);
-    if (checksumChar(head) !== code[code.length - 1]) throw new Error('交换码无效');
-    var version = ALPHABET.indexOf(code[0]);
-    if (version !== VERSION) throw new Error('交换码版本不支持');
-    var r = new BitReader(head.slice(1));
-    var N = r.read(4);
-    if (N < 3 || N > 9) throw new Error('交换码无效');
-    var difficulty = r.read(3);
+  function decodeShareCode(code, N) {   // N 由调用方(gamepage 从 cfg)提供,不在码里
+    if (typeof code !== 'string' || !(N >= 3 && N <= 9)) throw new Error('交换码无效');
+    var bits = b58ToBits(code);
+    if (!bits) throw new Error('交换码无效');
+    var r = new BitReader(bits);
     var uf = new UF(N * N);
     for (var rr = 0; rr < N; rr++) for (var c = 0; c < N; c++) {
       if (c < N - 1) { if (r.read(1)) uf.union(rr * N + c, rr * N + c + 1); }
@@ -352,6 +333,7 @@
     var solBits = bitsForCount(FACT[N]);
     var solution = [];
     for (var r3 = 0; r3 < N; r3++) solution.push(unrankPerm(r.read(solBits), N));
+    if (r.pos !== bits.length) throw new Error('交换码无效');   // 位流应恰好读完;不符 = N 不匹配 / 码坏
     cages.forEach(function (cage) {
       var vs = cage.cells.map(function (rc) { return solution[rc[0]][rc[1]]; });
       if (cage.op === '=') cage.target = vs[0];
@@ -360,7 +342,7 @@
       else if (cage.op === '-') cage.target = Math.max.apply(null, vs) - Math.min.apply(null, vs);
       else cage.target = Math.max.apply(null, vs) / Math.min.apply(null, vs);
     });
-    return { N: N, difficulty: difficulty, solution: solution, cages: cages };
+    return { solution: solution, cages: cages };   // 目标已推进各 cage;N 调用方自有
   }
 
   /* ---- FairPlay codec ---- */
@@ -373,8 +355,8 @@
       var puzzle = generate(N, difficulty, makeRng(freshSeed()));
       return encodeShareCode(puzzle);
     },
-    decode: function (param) {
-      try { return decodeShareCode(param); } catch (e) { return null; }
+    decode: function (param, N) {
+      try { return decodeShareCode(param, N); } catch (e) { return null; }
     }
   };
 })();
