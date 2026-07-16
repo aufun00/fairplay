@@ -50,6 +50,7 @@
             if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
             var p = q.get("p");
             if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
+            url += (url.indexOf("?") >= 0 ? "&" : "?") + "g=" + id;   // 完整传递 id,结果页据此拼回邀请链接
             location.replace(url);
             return;
           }

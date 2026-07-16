@@ -84,7 +84,8 @@
       '</symbol>' +
       /* 游戏 */
       '<symbol id="ic_match3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-        '<circle cx="5" cy="12" r="2.4"/><circle cx="12" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/>' +   // 三连
+        '<path d="M5 2v4M7 2v4M9 2v4"/><path d="M5 6h4"/><path d="M7 6v16"/>' +   // 叉子:三齿 + 齿根 + 柄
+        '<path d="M16 2c3 2 3 9 0 11"/><path d="M16 13v9"/>' +                     // 刀:弯刃 + 柄
       '</symbol>' +
       '<symbol id="ic_mathdoku" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 4v16M4 12h16"/><path d="M6.5 7.5h3M8 6v3"/>' +   // 数格 + 加号

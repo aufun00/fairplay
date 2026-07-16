@@ -4,7 +4,7 @@
    30.0s 倒计时(performance.now,切后台停表)→ 到点显示成绩 → 分享。 */
 (function () {
   var SIZE = 8, DURATION = 30000;
-  var FRUITS = ["", "🍎", "🍊", "🍋", "🍇", "🍉", "🫐"]; // 1..6
+  var DISHES = ["", "🍽️", "🥣", "☕", "🍵", "🍴", "🥄"]; // 1..6(餐具:盘/碗/杯/茶/叉勺/勺)
 
   var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.match3;
   var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
@@ -102,7 +102,7 @@
   function render() {
     for (var k = 0; k < SIZE * SIZE; k++) {
       var v = board[k], r = Math.floor(k / SIZE), c = k % SIZE;
-      cells[k].textContent = v ? FRUITS[v] : "";
+      cells[k].textContent = v ? DISHES[v] : "";
       cells[k].className = "cell" + (v ? " c" + v : "") +
         ((selected && selected.r === r && selected.c === c) ? " sel" : "");
     }
@@ -145,10 +145,7 @@
   function finish() {                    // 超时 → 结束:禁用按钮 + stage 级分享结果
     if (ended) return; ended = true;
     busy = true; selected = null; render();
-    var line = (L.game_share || "{nick} scored {score} in {game} # {code}")
-      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score)
-      .replace("{game}", L.game_name || "").replace("{code}", seedParam.slice(-4));
-    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", shareText: (L.logo || "FairPlay") + "\n" + line });
+    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", gameName: (L.match3x86 && L.match3x86.name) || "", score: score });
   }
 
   function boot() {

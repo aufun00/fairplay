@@ -54,6 +54,7 @@ window.FairPlay.Home = function (cfg) {
   function gamePlayUrl(game) {
     var url = game.key + "/" + game.key + ".html";
     if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+    url += (url.indexOf("?") >= 0 ? "&" : "?") + "g=" + game.id;   // 完整传递 id(结果页据此拼回邀请链接)
     return url;
   }
   function inviteLink(item) { return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param); }
@@ -209,7 +210,7 @@ window.FairPlay.Home = function (cfg) {
       if (!H.selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
       var nick = FairPlay.getNickname();
       var g = findGame(H.selected.gameId) || {};
-      var gname = (g.inf && L[g.inf] && L[g.inf].name) || g.key || "";
+      var gname = (g.dsp_dsc_idx && L[g.dsp_dsc_idx] && L[g.dsp_dsc_idx].name) || g.key || "";
       var line = (L.share_msg || "{nick} invites you to play {game} # {code}")
         .replace("{nick}", nick).replace("{game}", gname).replace("{code}", H.selected.param.slice(-4));
       FairPlay.share(line, inviteLink(H.selected));

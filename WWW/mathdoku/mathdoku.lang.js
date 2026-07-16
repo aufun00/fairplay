@@ -17,7 +17,7 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   md_aux_hint: "Pick a cell, then tap the operator to decompose its cage — results collect here.",
   md_aux_none: "no solution",
   md_rules: "Fill the {N}×{N} grid with 1–{N} so no number repeats in any row or column. Colored borders mark cages; the corner shows a target and operator — the cage's numbers must combine with it to reach the target. Single given cells are locked. A number turns red only when it already appears in the same row or column, or its cage can no longer reach its target. Each warning adds penalty time. Fill the grid with no red to win — shortest total time (with penalties) wins.",
-  /* 目录条目(inf):home 渲染 L3 用。键名 = mathdoku<size><difficulty> */
+  /* 目录条目(dsp_dsc_idx 指向此):home 渲染 L3 用。键名 = mathdoku<size><difficulty> */
   mathdoku54: { name: "MathDoku 5", desc: "5×5 · logic grid" },
   mathdoku94: { name: "MathDoku 9", desc: "9×9 · logic grid" }
 });

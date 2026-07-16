@@ -237,7 +237,7 @@
 
   <!-- 主页语言包(含通用置顶栏文本) -->
   <script src="index.lang.js"></script>
-  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,inf 键在里面) -->
+  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,dsp_dsc_idx 指向的键在里面) -->
   <script src="match3/match3.lang.js"></script>
   <script src="mathdoku/mathdoku.lang.js"></script>
   <script src="memory/memory.lang.js"></script>
@@ -364,7 +364,7 @@
         var subs = catalog[curL1].subs;
         var list = (curL2 >= 0 && subs[curL2]) ? subs[curL2].games : [];
         list.forEach(function (game) {
-          var t = L[game.inf] || {};
+          var t = L[game.dsp_dsc_idx] || {};
           var b = document.createElement("button"); b.className = "game";
           b.innerHTML = H.icoSvg(game.icon) +
             '<span class="ginfo"><span class="gname"></span><span class="gd"></span></span>';

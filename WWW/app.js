@@ -81,6 +81,16 @@ window.FairPlay.pushRecent = function (id) {
   } catch (e) {}
 };
 
+/* 邀请历史:把一条 {gameId,param,memo,ts} 插到最前,写 localStorage。纯数据、无渲染。
+   首页 startRound 建局、以及游戏结果页"发起我的挑战"现生成新局都用它(数据在 localStorage,脚本在 SW 预缓存)。 */
+window.FairPlay.pushHistory = function (entry) {
+  try {
+    var arr = JSON.parse(localStorage.getItem("fairplay.history")) || [];
+    arr.unshift(entry);
+    localStorage.setItem("fairplay.history", JSON.stringify(arr));
+  } catch (e) {}
+};
+
 /* 通用弹窗原语:造 .fp-overlay 背板 + .fp-card 卡片,调用方用 build(card, close) 填内容。
    opts: { dismissible=true(点背板关闭), cardClass, build, html,
            mount:element|selector —— 挂载点决定覆盖范围:默认 #app_frame=全窗(topbar 域);

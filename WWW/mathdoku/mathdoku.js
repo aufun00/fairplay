@@ -528,11 +528,7 @@
     if (ctl && ctl.phase() === 'ended') return;
     G.solved = true; active = false;
     paintScore(); saveGame();
-    var sc = finalScore();
-    var line = (L.game_share || "{nick} scored {score} in {game} # {code}")
-      .replace("{nick}", FairPlay.getNickname()).replace("{score}", sc)
-      .replace("{game}", (L.game_name || "MathDoku") + " " + N).replace("{code}", seedParam.slice(-4));
-    ctl.end("done", { title: L.md_win || "Solved!", shareText: (L.logo || "FairPlay") + "\n" + line });
+    ctl.end("done", { title: L.md_win || "Solved!", gameName: (L.game_name || "MathDoku") + " " + N, score: finalScore() });
   }
 
   /* ============ 装配 UI(时间/成绩在控制栏,开始/暂停遮盖由 control 统一)============ */

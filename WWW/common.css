@@ -158,11 +158,15 @@ body{
   max-width:22rem; text-align:left; color:var(--fg);
   font-size:.9rem; line-height:1.55; white-space:pre-line;
 }
-/* stage 级结果卡:只放分享(时间/成绩在控制栏、home 在 topbar,均未被遮)*/
+/* stage 级结果卡:标题 + 三出口(①发布成绩 ②发起挑战 ③看看其它;时间/成绩在控制栏、home 在 topbar,均未被遮)*/
+.fp-card.res{ gap:.7rem; min-width:13rem; }
 .fp-card .res-title{ font-size:1.05rem; font-weight:700; }
-.fp-card .res-share{
-  width:3.4rem; height:3.4rem; padding:0; cursor:pointer;
-  display:inline-flex; align-items:center; justify-content:center;
-  background:var(--accent); color:#fff; border:none; border-radius:.7rem;
+.fp-card .res-btns{ display:flex; flex-direction:column; gap:.5rem; width:100%; }
+.fp-card .res-b{
+  width:100%; padding:.6rem .8rem; cursor:pointer; font:inherit;
+  border:1px solid var(--line); border-radius:.6rem;
+  background:var(--bar-bg); color:var(--fg);
 }
-.fp-card .res-share .ic{ width:1.9rem; height:1.9rem; }
+.fp-card .res-b:hover{ border-color:var(--accent); }
+/* ① 发布我成绩 = 主操作,实心强调 */
+.fp-card .res-b.res-score{ background:var(--accent); color:#fff; border-color:var(--accent); }

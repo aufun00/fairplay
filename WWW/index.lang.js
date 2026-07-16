@@ -61,6 +61,10 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   score: "Score",
   game_share_btn: "Share result",
   game_share: "{nick} scored {score} in {game} # {code}",
+  /* 结果页三出口(control.js):留在游戏内传播 + 引流 */
+  res_share_score: "Share my score",
+  res_new_challenge: "Start my challenge",
+  res_more_games: "See other games",
 
   /* 主页 · 游戏说明(键名 = 注册表 descKey) */
   game_match3_desc: "Match-3 · clear the board",
@@ -128,6 +132,10 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   score: "分数",
   game_share_btn: "分享成绩",
   game_share: "{nick} 得了 {score} 分 在 {game} # {code}",
+  /* 结果页三出口(control.js):留在游戏内传播 + 引流 */
+  res_share_score: "发布我的成绩",
+  res_new_challenge: "发起我的挑战",
+  res_more_games: "看看其它游戏",
 
   /* 主页 · 游戏说明 */
   game_match3_desc: "三消 · 清空棋盘",

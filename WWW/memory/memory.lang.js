@@ -4,7 +4,7 @@ window.I18N = window.I18N || {};
 window.I18N.en = Object.assign(window.I18N.en || {}, {
   game_name: "Memory",            /* 成绩分享 {game} 用;score/game_share* 在 ../index.lang.js 共享 */
   mem_done: "All matched!",
-  /* 目录条目(inf):home 渲染 L3 用 */
+  /* 目录条目(dsp_dsc_idx 指向此):home 渲染 L3 用 */
   memory6: { name: "Memory", desc: "Match the pairs" }
 });
 window.I18N.zh = Object.assign(window.I18N.zh || {}, {

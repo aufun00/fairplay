@@ -235,7 +235,7 @@
 
   <!-- 主页语言包(含通用置顶栏文本) -->
   <script src="index.lang.js"></script>
-  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,inf 键在里面) -->
+  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,dsp_dsc_idx 指向的键在里面) -->
   <script src="match3/match3.lang.js"></script>
   <script src="mathdoku/mathdoku.lang.js"></script>
   <script src="memory/memory.lang.js"></script>
@@ -279,7 +279,7 @@
         }
         H.history.forEach(function (item, idx) {
           var g = H.findGame(item.gameId) || {};
-          var t = (g.inf && L[g.inf]) || {};
+          var t = (g.dsp_dsc_idx && L[g.dsp_dsc_idx]) || {};
           var name = t.name || g.key || "";
           var card = document.createElement("div");   // div:内部才能合法嵌套删除 button
           card.className = "gcard" + (item === H.selected ? " sel" : "");
@@ -308,7 +308,7 @@
         }
         H.recent.forEach(function (id) {
           var g = H.findGame(id);
-          var t = L[g.inf] || {};
+          var t = L[g.dsp_dsc_idx] || {};
           var b = document.createElement("button"); b.className = "gcard";
           b.innerHTML = H.icoSvg(g.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
           b.querySelector(".gc-name").textContent = t.name || g.key;
@@ -366,7 +366,7 @@
 
         if (bL2 != null) {                                  // 最深层 = 游戏列表
           catalog[bL1].subs[bL2].games.forEach(function (game) {
-            var t = L[game.inf] || {};
+            var t = L[game.dsp_dsc_idx] || {};
             var b = document.createElement("button"); b.className = "gcard";
             b.innerHTML = H.icoSvg(game.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
             b.querySelector(".gc-name").textContent = t.name || game.key;
