@@ -8,12 +8,19 @@
   var script = document.currentScript;
   var src = script ? (script.getAttribute("src") || "") : "";
   var base = src.indexOf("../") === 0 ? "../" : "./";   // 游戏页在子目录 → 根为 ../
+  var showMode = !location.search;                      // 无参数(首页)才显 op_mode 开关;有参数=gamepage/邀请入口,隐藏
 
   var TOPBAR_HTML =
     '<a class="logo" data-i18n="logo" href="' + base + '">FairPlay</a>' +
     /* nickname 无 data-i18n:由 mount() 用 getNickname() 填,免得被 applyI18n 覆盖 */
     '<span class="nickname" role="button" tabindex="0"></span>' +
     '<span class="spacer"></span>' +
+    /* op_mode 开关(仅无参数页):固定 sliders 图标 + 随语言短码(New/Pro),点击回路由器重分流 */
+    (showMode ?
+      '<button type="button" class="iconbtn modebtn" data-i18n-aria="op_mode" aria-label="Play mode">' +
+        '<svg class="ic" aria-hidden="true"><use href="#ic_mode"/></svg>' +
+        '<span class="mode-code"></span>' +
+      '</button>' : '') +
     '<button type="button" class="iconbtn langbtn" data-i18n-aria="lang" aria-label="Language">' +
       '<svg class="ic" aria-hidden="true"><use href="#ic_lang"/></svg>' +
       '<span class="lang-code"></span>' +
@@ -23,6 +30,13 @@
     '<button type="button" class="iconbtn" data-i18n-aria="exit" aria-label="Exit">' +
       '<svg class="ic" aria-hidden="true"><use href="#ic_exit"/></svg>' +
     '</button>';
+
+  /* op_mode 短码:当前模式的本地化标签(pro→Pro/熟,否则 New/新) */
+  function modeLabel() {
+    if (!window.FairPlay) return "";
+    var L = FairPlay.L();
+    return FairPlay.getOpMode() === "pro" ? (L.op_pro || "Pro") : (L.op_new || "New");
+  }
 
   /* 点昵称 → 弹出编辑窗(输入 + 免责声明 + 已读确认 + 保存/取消)。文案取自当前语言 */
   function openNicknameModal(nickEl) {
@@ -154,6 +168,16 @@
       if (code && window.FairPlay) code.textContent = FairPlay.L().lang_short || FairPlay.getLang();
       langBtn.addEventListener("click", openLangModal);
     }
+    var modeBtn = header.querySelector(".modebtn");
+    if (modeBtn && window.FairPlay) {
+      var mcode = modeBtn.querySelector(".mode-code");
+      if (mcode) mcode.textContent = modeLabel();
+      /* 翻转 new↔pro → 存偏好 → 回路由器,按新 mode 重分流(开关只在无参数首页出现,故总在根目录) */
+      modeBtn.addEventListener("click", function () {
+        FairPlay.setOpMode(FairPlay.getOpMode() === "pro" ? "new" : "pro");
+        location.replace(base + "index.html");
+      });
+    }
     var exitBtn = header.querySelector('[data-i18n-aria="exit"]');
     if (exitBtn) exitBtn.addEventListener("click", openExitModal);
   }
@@ -165,6 +189,8 @@
     if (code) code.textContent = FairPlay.L().lang_short || FairPlay.getLang();
     var nick = document.querySelector("#app_topbar .nickname");
     if (nick) nick.textContent = FairPlay.getNickname();
+    var mcode = document.querySelector("#app_topbar .mode-code");
+    if (mcode) mcode.textContent = modeLabel();
   });
 
   /* 脚本置于 shell 之后 → 同步注入;万一被放到 head,退回 DOMContentLoaded */

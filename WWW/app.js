@@ -59,6 +59,28 @@ window.FairPlay.setNickname = function (v) {
   try { localStorage.setItem("fairplay.nickname", v == null ? "" : String(v)); } catch (e) {}
 };
 
+/* 首页模式(op_mode):localStorage 持久化,默认 "new"(引导页);"pro" = 一屏全展开页。
+   index.html 路由器据此分流到 index.<mode>.html。纯存储,导航由调用方(topbar)处理。 */
+window.FairPlay.getOpMode = function () {
+  try { var v = localStorage.getItem("fairplay.mode"); if (v) return v; } catch (e) {}
+  return "new";
+};
+window.FairPlay.setOpMode = function (m) {
+  try { localStorage.setItem("fairplay.mode", m == null ? "new" : String(m)); } catch (e) {}
+};
+
+/* 最近玩过(MRU):把 id 提到最前(已存在先摘出),写 localStorage。纯数据、无渲染。
+   首页开一局、以及通过邀请码 ?g 直接进游戏(index.html 路由器)都调它,故放通用层。 */
+window.FairPlay.pushRecent = function (id) {
+  try {
+    var arr = JSON.parse(localStorage.getItem("fairplay.recent")) || [];
+    var i = arr.indexOf(id);
+    if (i >= 0) arr.splice(i, 1);
+    arr.unshift(id);
+    localStorage.setItem("fairplay.recent", JSON.stringify(arr));
+  } catch (e) {}
+};
+
 /* 通用弹窗原语:造 .fp-overlay 背板 + .fp-card 卡片,调用方用 build(card, close) 填内容。
    opts: { dismissible=true(点背板关闭), cardClass, build, html,
            mount:element|selector —— 挂载点决定覆盖范围:默认 #app_frame=全窗(topbar 域);

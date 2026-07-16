@@ -28,6 +28,14 @@
         '<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>' +
         '<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' +
       '</symbol>' +
+      /* 首页模式开关(线性,sliders 推子):new 引导页 ↔ pro 一屏页 */
+      '<symbol id="ic_mode" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/>' +
+        '<line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/>' +
+        '<line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/>' +
+        '<line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/>' +
+      '</symbol>' +
       /* 游戏控件(实心,fill=currentColor):播放/暂停 */
       '<symbol id="ic_play" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
         '<path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/>' +

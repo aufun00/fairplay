@@ -8,6 +8,9 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   exit: "Exit",
   lang: "Language",
   lang_short: "En",
+  op_mode: "Home mode",
+  op_new: "New",
+  op_pro: "Pro",
   home: "Home",
   play: "Start",         /* topbar 游戏控件 ▶ 的 aria */
   pause: "Pause",        /* topbar 游戏控件 ⏸ 的 aria */
@@ -40,6 +43,9 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   onb_existing: "Reshare an existing challenge",
   onb_recent: "Pick from recently played",
   onb_list: "Pick from the games list",
+  onb_note1: "FairPlay stores nothing about you — no account, no sign-in, no tracking.",
+  onb_note2: "Your nickname is only used to build the invite and result text you choose to share.",
+  onb_note3: "Same invite, same puzzle — everyone plays fair and scores compare.",
   recent_empty: "No recent games yet",
   /* 分类文案(键 = games.js 的 key;L1 有 name/desc,L2 有 name) */
   cat: {
@@ -69,6 +75,9 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   exit: "退出",
   lang: "语言",
   lang_short: "中",
+  op_mode: "首页模式",
+  op_new: "新",
+  op_pro: "熟",
   home: "首页",
   play: "开始",
   pause: "暂停",
@@ -101,6 +110,9 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   onb_existing: "发布一个已存在的挑战",
   onb_recent: "从最近玩过的游戏中选择",
   onb_list: "从游戏列表中选择",
+  onb_note1: "FairPlay 不记录任何关于你的信息——无账号、无登录、无追踪。",
+  onb_note2: "称呼只用来生成你要分享的邀请与成绩文本。",
+  onb_note3: "同一个邀请 = 同一道题,人人公平、成绩可比。",
   recent_empty: "还没有玩过的游戏",
   /* 分类文案(键 = games.js 的 key;L1 有 name/desc,L2 有 name) */
   cat: {

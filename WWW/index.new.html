@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FairPlay</title>
+  <link rel="stylesheet" href="common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="favicon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <!-- 通用引导:注册 SW -->
+  <script src="app.js"></script>
+  <script>FairPlay.registerSW("sw.js");</script>
+
+  <!-- UI 图标 sprite(内联注入,供 <use href="#id"> 引用) -->
+  <script src="assets/icons.js"></script>
+
+  <!-- 版本号(唯一来源)+ 通用编码模块 先加载 -->
+  <script src="version.js"></script>
+  <script src="pack.js"></script>
+  <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
+  <script src="games.js"></script>
+  <script src="match3/match3.invcode.js"></script>
+  <script src="mathdoku/mathdoku.invcode.js"></script>
+  <script src="memory/memory.invcode.js"></script>
+  <script>
+    /* ---- 路由器:邀请码 ?g=<id>&p=<param> → 在 window.GAMES 树里按 id 找游戏,
+       由 key 推路径(key/key.html)+ 拼 cfg + p → 跳游戏;无 g / 找不到 = 显示主页 ---- */
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var g = q.get("g");
+      if (!g || !window.GAMES) return;
+      var id = +g, game = null;
+      window.GAMES.forEach(function (l1) {
+        l1.subs.forEach(function (l2) {
+          l2.games.forEach(function (gm) { if (gm.id === id) game = gm; });
+        });
+      });
+      if (!game) return;
+      var url = game.key + "/" + game.key + ".html";
+      if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+      var p = q.get("p");
+      if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
+      location.replace(url);
+    })();
+  </script>
+
+  <style>
+    /* ---- 主页专属样式(画框/置顶栏在 common.css) ---- */
+    #hm_content{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; }
+    .block{ padding:.75rem; border-bottom:1px solid var(--line); }
+    /* hidden 属性必须胜过下面各 #id 的 display 规则(否则 showView 隐不掉 invite/history) */
+    [hidden]{ display:none !important; }
+
+    /* invite:一行 = 左 QR(方形)+ 中 invfields(param/memo)+ 右 Share(与 QR 等大方形)。
+       与下方 #hm_history 视觉相连:去掉本块下分隔线与下内边距 */
+    #hm_invite{ display:flex; gap:.75rem; align-items:flex-start; border-bottom:0; padding-bottom:0; }
+    #hm_invite .qr{
+      flex:0 0 auto; position:relative; overflow:hidden;
+      border:1px solid var(--line); border-radius:.5rem;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); font-size:.8rem;
+    }
+    /* QR 渲染层:选中邀请后画入二维码 canvas;无选中时显示占位 .qr-code */
+    #hm_invite .qr .qr-render{ position:absolute; inset:0; display:none; }
+    #hm_invite .qr.has-qr .qr-render{ display:block; }
+    #hm_invite .qr.has-qr .qr-code{ display:none; }
+    #hm_invite .qr .qr-render canvas{
+      width:100%; height:100%; display:block;
+      image-rendering:pixelated; object-fit:contain;   /* 缩放不糊,方形贴合 */
+    }
+    /* 点 QR → 放大弹窗(便于扫描):白底大二维码 + #code 标注 */
+    .fp-card.qrbig{ gap:.6rem; }
+    .fp-card.qrbig .qr-big{
+      width:min(74vw, 320px); height:min(74vw, 320px);
+      image-rendering:pixelated; display:block; border-radius:.4rem;
+    }
+    .fp-card.qrbig .qr-big-cap{ color:var(--muted); font-size:.9rem; text-align:center; font-variant-numeric:tabular-nums; }
+    /* QR 长按 → 确认层:新标签打开游戏 */
+    #hm_invite .qr .qr-open{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center; text-align:center;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+      font:inherit; font-size:.75rem; padding:.2rem; cursor:pointer;
+    }
+    #hm_invite .qr.confirm .qr-open{ display:flex; }
+    /* invfields:param/memo 两行,居中占据 QR 与 Share 之间 */
+    #hm_invite .invfields{ flex:1 1 auto; display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+    #hm_invite .invfields input{
+      width:100%; background:var(--bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.4rem;
+      padding:.35rem .5rem; font:inherit;
+    }
+    #hm_invite .invfields .param{ color:var(--muted); }
+    /* share:与 QR 等大的方形图标按钮(尺寸由 JS 同步),标准分享图标 */
+    #hm_invite .share{
+      flex:0 0 auto; padding:0; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:var(--accent); color:#fff; border:none; border-radius:.5rem;
+    }
+    #hm_invite .share .ic{ width:1.75rem; height:1.75rem; }
+    /* ---- L0 引导选择屏 & ③ browse 下钻:60% 宽居中 ---- */
+    #hm_l0, #hm_browse{ width:60%; margin:0 auto; }
+    @media (max-width:560px){ #hm_l0, #hm_browse{ width:100%; } }
+    .onb-q{ font-size:1.05rem; color:var(--fg); text-align:center; margin:0 0 1rem; }
+    .onb-btns{ display:flex; flex-direction:column; gap:.6rem; }
+    .onb-btns button, .bc-opts .opt{
+      display:block; width:100%; text-align:left;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.7rem .8rem; font:inherit; cursor:pointer;
+    }
+    .onb-btns button:hover, .bc-opts .opt:hover{ border-color:var(--accent); }
+    /* L0 说明小字:填补空白 + 讲清匿名/称呼/公平 */
+    .onb-note{ margin:1.1rem 0 0; display:flex; flex-direction:column; gap:.4rem; }
+    .onb-note p{ margin:0; font-size:.8rem; line-height:1.4; color:var(--muted); text-align:center; }
+
+    /* ③ 面包屑:根/已选层级 chip,横排;点 chip 回该层 */
+    .bc-crumbs{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .bc-chip{
+      background:transparent; color:var(--accent); border:1px solid var(--accent);
+      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
+    }
+    #hm_browse hr{ border:0; border-top:1px solid var(--line); margin:.7rem 0; }
+    .bc-opts{ display:flex; flex-direction:column; gap:.5rem; }
+    /* ---- 统一游戏条目 .gcard:宽按钮,左大图标 + 右两行(名/副);history 尾部删除按钮。
+       history / recent / browse 三处共用观感 ---- */
+    .gcard{
+      display:flex; align-items:center; gap:.7rem; width:100%; text-align:left;
+      background:var(--bar-bg); color:var(--fg);
+      border:1px solid var(--line); border-radius:.5rem;
+      padding:.55rem .7rem; font:inherit; cursor:pointer;
+    }
+    .gcard:hover, .gcard.sel{ border-color:var(--accent); }
+    .gcard .ic{ width:2.2rem; height:2.2rem; flex:0 0 auto; }   /* 大图标 */
+    .gcard .gc-info{ display:flex; flex-direction:column; min-width:0; flex:1 1 auto; }
+    .gcard .gc-name{ font-size:.98rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .gcard .gc-sub{ font-size:.8rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* history 尾部:直接删除按钮(取代旧的长按确认) */
+    .gcard .gc-del{
+      flex:0 0 auto; padding:.25rem .35rem; border:none; background:transparent;
+      color:var(--muted); cursor:pointer; font-size:1.15rem; line-height:1; border-radius:.4rem;
+    }
+    .gcard .gc-del:hover{ color:#e5484d; }
+
+    /* ① history / ② recent 容器:竖向列表(browse 用 .bc-opts,已是竖列) */
+    #hm_history{ display:flex; flex-direction:column; gap:.5rem; }
+    #hm_history .pi-empty{ color:var(--muted); font-size:.8rem; }
+    #hm_recent .rec-list{ display:flex; flex-direction:column; gap:.5rem; }
+    #hm_recent .rec-empty{ color:var(--muted); font-size:.8rem; }
+  </style>
+
+  <!-- ==================== DEBUG ONLY ====================
+    调试用尺寸微调。URL 加 ?s=a,b,c(百分比,100=当前):
+      a = history button 缩放%   b = recent button 缩放%   c = games 按钮高度%
+    例:?s=150,120,130 。不带 s 或 DEBUG=false 时无任何影响。
+    【正式发布前:把 DEBUG 改 false,或直接删除本块】 -->
+  <script>
+    (function () {
+      var DEBUG = true;                 // ← 正式发布改 false(或删掉整块)
+      if (!DEBUG) return;
+      var s = new URLSearchParams(location.search).get("s");
+      if (!s) return;
+      var p = s.split(",").map(function (x) { return parseFloat(x); });
+      var a = p[0], b = p[1], c = p[2], css = "";
+      if (a > 0) css += "#hm_history .gcard{ zoom:" + (a / 100) + " !important; }\n";
+      if (b > 0) css += "#hm_recent .gcard{ zoom:" + (b / 100) + " !important; }\n";
+      if (c > 0) css += ".matrix .game{ height:" + (4.19 * c / 100).toFixed(3) + "rem !important; }\n";
+      if (!css) return;
+      var st = document.createElement("style"); st.id = "dbg_scale"; st.textContent = css;
+      document.head.appendChild(st);
+      console.log("[DEBUG] s=" + s + "  a(hist)=" + a + "% b(rec)=" + b + "% c(game-h)=" + c + "%");
+    })();
+  </script>
+</head>
+<body>
+  <div id="app_frame">
+    <!-- 置顶栏(占位,先不实现) -->
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
+    <header id="app_topbar"></header>
+
+    <main id="hm_content">
+      <!-- L0:引导选择屏(默认视图;logo 回此) -->
+      <section id="hm_l0" class="block" hidden>
+        <p class="onb-q" data-i18n="onb_q">Do you want to publish a challenge?</p>
+        <div class="onb-btns">
+          <button type="button" id="onb_existing" data-i18n="onb_existing">Reshare an existing challenge</button>
+          <button type="button" id="onb_recent" data-i18n="onb_recent">Pick from recently played</button>
+          <button type="button" id="onb_list" data-i18n="onb_list">Pick from the games list</button>
+        </div>
+        <div class="onb-note">
+          <p data-i18n="onb_note1">FairPlay stores nothing about you — no account, no sign-in, no tracking.</p>
+          <p data-i18n="onb_note2">Your nickname is only used to build the invite and result text you choose to share.</p>
+          <p data-i18n="onb_note3">Same invite, same puzzle — everyone plays fair and scores compare.</p>
+        </div>
+      </section>
+
+      <!-- ① invite 视图:QR(跨2行) + param/memo/Share -->
+      <section id="hm_invite" class="block" hidden>
+        <div class="qr">
+          <div class="qr-render"></div>
+          <span class="qr-code">QR</span>
+          <button type="button" class="qr-open" data-i18n="qr_open">↗ New tab</button>
+        </div>
+        <div class="invfields">
+          <input class="param" type="text" readonly placeholder="—">
+          <input class="memo" type="text" data-i18n-ph="memo_ph" placeholder="memo">
+        </div>
+        <button type="button" class="share" data-i18n-aria="share_btn" aria-label="Share invite">
+          <svg class="ic" aria-hidden="true"><use href="#ic_share"/></svg>
+        </button>
+      </section>
+
+      <!-- ① invite 视图第二部分:history(3 列网格) -->
+      <section id="hm_history" class="block" hidden>
+        <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
+      </section>
+
+      <!-- ② recent 视图:最近玩过的游戏(按钮列表,点 = 再发一局) -->
+      <section id="hm_recent" class="block" hidden>
+        <div class="rec-list" id="hm_recent_row"></div>
+      </section>
+
+      <!-- ③ browse 视图:面包屑逐级下钻(L1 时长 → L2 类型 → 游戏),内容由 renderBrowse 生成 -->
+      <section id="hm_browse" class="block" hidden></section>
+    </main>
+  </div>
+
+  <!-- 主页语言包(含通用置顶栏文本) -->
+  <script src="index.lang.js"></script>
+  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,inf 键在里面) -->
+  <script src="match3/match3.lang.js"></script>
+  <script src="mathdoku/mathdoku.lang.js"></script>
+  <script src="memory/memory.lang.js"></script>
+  <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
+  <script src="topbar.js"></script>
+  <!-- QR 库(生成邀请二维码) -->
+  <script src="assets/qr.js"></script>
+  <!-- 首页共享核心(new/pro 共用:状态/邀请/QR/分享/recent/startRound) -->
+  <script src="home-core.js"></script>
+  <script>
+    (function () {
+      /* 置顶栏:i18n 文本 + 占位符 + 版本号 */
+      window.FairPlay.applyI18n();
+      function getL() { return (window.I18N && window.I18N[window.FairPlay.getLang()]) || {}; }
+      var L = getL();
+      var catalog = window.GAMES || [];
+
+      /* 共享核心(状态 + 邀请/QR/分享 + recent + startRound);本页只留自己的列表/视图渲染 */
+      var H = window.FairPlay.Home({
+        getL: getL,
+        base: location.origin + location.pathname.replace(/[^/]*$/, ""),   // 目录根,邀请链接命中路由器
+        catalog: catalog,
+        codecs: window.FAIRPLAY_CODECS || {},
+        onHistory: renderPickInv,
+        onRecent: renderRecent,
+        onRoundStarted: function () { showView("invite"); },               // 开完一局跳①
+        onMemoInput: function (label) {
+          var selSub = document.querySelector("#hm_history .gcard.sel .gc-sub");
+          if (selSub) selSub.textContent = label;
+        }
+      });
+      H.initInvite();
+
+      /* ① history:统一宽按钮 .gcard(左大图标 + 名#码 / memo + 右删除按钮) */
+      function renderPickInv() {
+        var box = document.getElementById("hm_history");
+        box.innerHTML = "";
+        if (!H.history.length) {
+          var e = document.createElement("div"); e.className = "pi-empty";
+          e.textContent = L.pick_empty || "No invites yet"; box.appendChild(e); return;
+        }
+        H.history.forEach(function (item, idx) {
+          var g = H.findGame(item.gameId) || {};
+          var t = (g.inf && L[g.inf]) || {};
+          var name = t.name || g.key || "";
+          var card = document.createElement("div");   // div:内部才能合法嵌套删除 button
+          card.className = "gcard" + (item === H.selected ? " sel" : "");
+          card.innerHTML =
+            (g.icon ? H.icoSvg(g.icon) : "🎮") +
+            '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>' +
+            '<button type="button" class="gc-del" aria-label="Delete">🗑️</button>';
+          card.querySelector(".gc-name").textContent = name + " # " + item.param.slice(-4);
+          card.querySelector(".gc-sub").textContent = H.entryLabel(item);
+          card.addEventListener("click", function () { H.selectEntry(item); });
+          card.querySelector(".gc-del").addEventListener("click", function (e) { e.stopPropagation(); H.deleteAt(idx); });
+          box.appendChild(card);
+        });
+      }
+
+      /* ② recent:同 .gcard(名 + desc);点 = 再发一局 */
+      function renderRecent() {
+        var box = document.getElementById("hm_recent_row");
+        box.innerHTML = "";
+        var before = H.recent.length;
+        H.recent = H.recent.filter(function (id) { return H.findGame(id); });
+        if (H.recent.length !== before) H.saveRecent();
+        if (!H.recent.length) {
+          var e = document.createElement("div"); e.className = "rec-empty";
+          e.textContent = L.recent_empty || "No recent games"; box.appendChild(e); return;
+        }
+        H.recent.forEach(function (id) {
+          var g = H.findGame(id);
+          var t = L[g.inf] || {};
+          var b = document.createElement("button"); b.className = "gcard";
+          b.innerHTML = H.icoSvg(g.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
+          b.querySelector(".gc-name").textContent = t.name || g.key;
+          b.querySelector(".gc-sub").textContent = t.desc || "";
+          b.addEventListener("click", function () { H.startRound(g); });
+          box.appendChild(b);
+        });
+      }
+
+      /* 分类文案(L.cat[key] = {name, desc});缺则回退 key */
+      function catInfo(node) { return (L.cat && L.cat[node.key]) || {}; }
+
+      /* ---- 视图状态机:l0 引导屏 / ① invite / ② recent / ③ browse ---- */
+      var curView = "l0";
+      function showView(name) {
+        curView = name;
+        document.getElementById("hm_l0").hidden = (name !== "l0");
+        document.getElementById("hm_invite").hidden = (name !== "invite");
+        document.getElementById("hm_history").hidden = (name !== "invite");
+        document.getElementById("hm_recent").hidden = (name !== "recent");
+        document.getElementById("hm_browse").hidden = (name !== "browse");
+        if (name === "l0") {
+          /* L0 空态灰按钮:无邀请→灰"复用已存在";无有效最近→灰"最近玩过" */
+          document.getElementById("onb_existing").disabled = !H.history.length;
+          document.getElementById("onb_recent").disabled = !H.recent.some(function (id) { return H.findGame(id); });
+        } else if (name === "invite") {
+          if (!H.selected && H.history.length) H.selectEntry(H.history[0]);   // 自动选中最新
+          renderPickInv();
+          H.syncSquares();
+        } else if (name === "recent") {
+          renderRecent();
+        } else if (name === "browse") {
+          bL1 = null; bL2 = null;                                             // 进入 = 回 L1
+          renderBrowse();
+        }
+      }
+
+      /* ---- ③ browse:面包屑逐级下钻(L1 时长 → L2 类型 → 游戏)---- */
+      var bL1 = null, bL2 = null;
+      function crumbChip(label, onClick) {
+        var b = document.createElement("button"); b.className = "bc-chip";
+        b.textContent = label; b.addEventListener("click", onClick);
+        return b;
+      }
+      function renderBrowse() {
+        var box = document.getElementById("hm_browse"); box.innerHTML = "";
+        var crumbs = document.createElement("div"); crumbs.className = "bc-crumbs";
+        crumbs.appendChild(crumbChip(L.onb_list || "Games list", function () { bL1 = null; bL2 = null; renderBrowse(); }));
+        if (bL1 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1]).name || catalog[bL1].key, function () { bL2 = null; renderBrowse(); }));
+        if (bL2 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1].subs[bL2]).name || catalog[bL1].subs[bL2].key, function () { renderBrowse(); }));
+        box.appendChild(crumbs);
+        box.appendChild(document.createElement("hr"));
+        var opts = document.createElement("div"); opts.className = "bc-opts";
+        box.appendChild(opts);
+
+        if (bL2 != null) {                                  // 最深层 = 游戏列表
+          catalog[bL1].subs[bL2].games.forEach(function (game) {
+            var t = L[game.inf] || {};
+            var b = document.createElement("button"); b.className = "gcard";
+            b.innerHTML = H.icoSvg(game.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
+            b.querySelector(".gc-name").textContent = t.name || game.key;
+            b.querySelector(".gc-sub").textContent = t.desc || "";
+            b.addEventListener("click", function () { H.startRound(game); });
+            opts.appendChild(b);
+          });
+        } else if (bL1 != null) {                           // L2 类型(只显有游戏的)
+          catalog[bL1].subs.forEach(function (l2, j) {
+            if (!H.l2Full(l2)) return;
+            var b = document.createElement("button"); b.className = "opt";
+            b.textContent = catInfo(l2).name || l2.key;
+            b.addEventListener("click", function () { bL2 = j; renderBrowse(); });
+            opts.appendChild(b);
+          });
+        } else {                                            // L1 时长(只显有游戏的),显 desc
+          catalog.forEach(function (l1, i) {
+            if (!H.l1Full(l1)) return;
+            var c = catInfo(l1);
+            var b = document.createElement("button"); b.className = "opt";
+            b.textContent = c.desc || c.name || l1.key;
+            b.addEventListener("click", function () { bL1 = i; bL2 = null; renderBrowse(); });
+            opts.appendChild(b);
+          });
+        }
+      }
+
+      /* L0 三按钮 → 三条路 */
+      document.getElementById("onb_existing").addEventListener("click", function () { showView("invite"); });
+      document.getElementById("onb_recent").addEventListener("click", function () { showView("recent"); });
+      document.getElementById("onb_list").addEventListener("click", function () { showView("browse"); });
+
+      /* 语言就地切换:更新 L 引用 + 重渲染当前视图 */
+      window.addEventListener("fairplay:langchange", function () {
+        L = getL();
+        if (curView === "invite") renderPickInv();
+        else if (curView === "recent") renderRecent();
+        else if (curView === "browse") renderBrowse();
+      });
+
+      showView("l0");
+    })();
+  </script>
+</body>
+</html>
