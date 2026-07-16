@@ -28,13 +28,20 @@
         '<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>' +
         '<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' +
       '</symbol>' +
+      /* 游戏控件(实心,fill=currentColor):播放/暂停 */
+      '<symbol id="ic_play" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/>' +
+      '</symbol>' +
+      '<symbol id="ic_pause" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>' +
+      '</symbol>' +
 
       /* ===== 目录图标(线性,stroke=currentColor;草稿,可迭代)===== */
       /* L1 大类 */
       '<symbol id="ic_flash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M13 2 3 14 12 14 11 22 21 10 12 10z"/>' +   // 闪电:<1m
       '</symbol>' +
-      '<symbol id="ic_short" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<symbol id="ic_quick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/>' +   // 咖啡杯:1~5m
         '<path d="M7 2v2M11 2v2M15 2v2"/>' +
       '</symbol>' +
@@ -73,6 +80,19 @@
       '</symbol>' +
       '<symbol id="ic_mathdoku" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 4v16M4 12h16"/><path d="M6.5 7.5h3M8 6v3"/>' +   // 数格 + 加号
+      '</symbol>' +
+      /* mathdoku 变体:数格 + 右下格填尺寸数字(区分 5×5 / 9×9,小尺寸也一眼分) */
+      '<symbol id="ic_mathdoku5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 2.5v7M2.5 6h7"/>' +                          // ↖ +
+        '<path d="M14.5 2.5 21.5 9.5M21.5 2.5 14.5 9.5"/>' +      // ↗ ×
+        '<path d="M2.5 18h7M6 14.3h.01M6 21.7h.01"/>' +           // ↙ ÷
+        '<text x="18" y="22.8" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="800" fill="currentColor" stroke="none">5</text>' +  // ↘ 尺寸
+      '</symbol>' +
+      '<symbol id="ic_mathdoku9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 2.5v7M2.5 6h7"/>' +
+        '<path d="M14.5 2.5 21.5 9.5M21.5 2.5 14.5 9.5"/>' +
+        '<path d="M2.5 18h7M6 14.3h.01M6 21.7h.01"/>' +
+        '<text x="18" y="22.8" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="800" fill="currentColor" stroke="none">9</text>' +
       '</symbol>' +
       '<symbol id="ic_memory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="3" y="6" width="10" height="14" rx="1.6"/><rect x="11" y="4" width="10" height="14" rx="1.6"/>' +   // 两张牌
