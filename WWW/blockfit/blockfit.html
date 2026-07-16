@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>blockfit — FairPlay</title>
+  <link rel="stylesheet" href="../common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script src="../app.js"></script>
+  <script>FairPlay.registerSW("../sw.js");</script>
+
+  <style>
+    #blockfit_stage { display:flex; flex-direction:column; justify-content:center; gap:.7rem; padding:.5rem; }
+    #bf_board {
+      width:100%; aspect-ratio:1/1; display:grid; gap:2px;
+      grid-template-columns:repeat(8,1fr);
+      background:var(--line); border:1px solid var(--line); border-radius:.4rem; overflow:hidden;
+      touch-action:none;   /* 拖块经过棋盘时不触发滚页 */
+    }
+    #bf_board .bc {
+      background:var(--bg); -webkit-user-select:none; user-select:none;
+      transition:background .1s, box-shadow .1s;
+    }
+    #bf_board .bc.fill { border-radius:2px; }
+    #bf_board .bc.gok  { box-shadow:inset 0 0 0 2px #3ba55d; }   /* 拖拽落点:合法(绿) */
+    #bf_board .bc.gbad { box-shadow:inset 0 0 0 2px #e5484d; }   /* 拖拽落点:非法(红) */
+
+    /* 托盘:一行 3 个待放的块,用足整宽(从这里拖块到棋盘落子)*/
+    #bf_tray { display:flex; gap:.5rem; align-items:center; }
+    #bf_tray .slot {
+      flex:1 1 0; aspect-ratio:1/1;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid var(--line); border-radius:.5rem; padding:.4rem;
+      background:var(--bar-bg); cursor:grab; touch-action:none;
+    }
+    #bf_tray .slot.empty { opacity:.25; cursor:default; }
+    #bf_tray .pg { display:grid; gap:1px; width:100%; height:100%; }
+    #bf_tray .pg .pc { border-radius:1px; }
+    #bf_tray .pg .pc.e { background:transparent; }
+
+    /* 跟手的拖拽虚影(块真实形状) */
+    .bf-ghost { position:fixed; display:grid; gap:2px; z-index:60; pointer-events:none; opacity:.85; }
+    .bf-ghost .gcell { border-radius:2px; }
+  </style>
+</head>
+<body>
+  <div id="app_frame">
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入 -->
+    <header id="app_topbar"></header>
+    <!-- 控制栏:空壳,内容由 control.js 注入(时间/▶⏸/成绩) -->
+    <div id="app_control"></div>
+    <!-- 游戏 play 区 -->
+    <main id="blockfit_stage" class="app_stage"></main>
+  </div>
+
+  <!-- 版本号 + 通用编码 + 本游戏邀请码编解码 -->
+  <script src="../version.js"></script>
+  <script src="../pack.js"></script>
+  <script src="blockfit.invcode.js"></script>
+  <!-- 注册表(结果页/续玩:按 ?g 查自己的 dsp_dsc_idx / resume) -->
+  <script src="../games.js"></script>
+  <!-- 先通用置顶栏文本,再游戏专属文本 -->
+  <script src="../index.lang.js"></script>
+  <script src="blockfit.lang.js"></script>
+  <!-- 图标雪碧图 + 置顶栏注入 -->
+  <script src="../assets/icons.js"></script>
+  <script src="../topbar.js"></script>
+  <script>FairPlay.applyI18n();</script>
+  <!-- 控制栏 + 游戏逻辑 -->
+  <script src="../control.js"></script>
+  <script src="blockfit.js"></script>
+</body>
+</html>

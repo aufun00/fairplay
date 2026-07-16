@@ -106,6 +106,22 @@
       '<symbol id="ic_memory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="3" y="6" width="10" height="14" rx="1.6"/><rect x="11" y="4" width="10" height="14" rx="1.6"/>' +   // 两张牌
       '</symbol>' +
+      /* blockfit 三档:Γ 形 5 格块(上排 3 + 左列 3,共用左上角)+ 右下缺口角标时间 30/90/∞ */
+      '<symbol id="ic_blockfit30" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
+        '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
+        '<text x="16" y="20.6" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="800">30</text>' +
+      '</symbol>' +
+      '<symbol id="ic_blockfit90" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
+        '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
+        '<text x="16" y="20.6" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="800">90</text>' +
+      '</symbol>' +
+      '<symbol id="ic_blockfitinf" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
+        '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
+        '<text x="16" y="21" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="800">∞</text>' +
+      '</symbol>' +
     '</svg>';
 
   function inject() {

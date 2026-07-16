@@ -37,7 +37,11 @@ const SHELL = [
   "./memory/memory.html",
   "./memory/memory.lang.js",
   "./memory/memory.invcode.js",
-  "./memory/memory.js"
+  "./memory/memory.js",
+  "./blockfit/blockfit.html",
+  "./blockfit/blockfit.lang.js",
+  "./blockfit/blockfit.invcode.js",
+  "./blockfit/blockfit.js"
 ];
 
 self.addEventListener("install", (e) => {
