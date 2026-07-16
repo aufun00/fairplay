@@ -83,9 +83,10 @@ window.FairPlay.openModal = function (opts) {
   return { overlay: ov, card: card, close: close };
 };
 
-/* 分享(唯一入口,topbar 域):有原生分享用原生(可带链接),否则复制文本。首页与各游戏结果都调它 */
+/* 分享(唯一入口,topbar 域):文本+链接合成一条(link 折进 text,不用单独 url 字段——
+   很多 App 拿到 {text,url} 会只显示 url、丢掉 text)。有原生分享用原生,否则复制。首页与各游戏结果都调它 */
 window.FairPlay.share = function (text, url) {
-  var data = url ? { text: text, url: url } : { text: text };
-  try { if (navigator.share) { navigator.share(data).catch(function () {}); return; } } catch (e) {}
-  try { if (navigator.clipboard) navigator.clipboard.writeText(url ? (text + "\n" + url) : text); } catch (e) {}
+  var msg = url ? (text + "\n" + url) : text;
+  try { if (navigator.share) { navigator.share({ text: msg }).catch(function () {}); return; } } catch (e) {}
+  try { if (navigator.clipboard) navigator.clipboard.writeText(msg); } catch (e) {}
 };
