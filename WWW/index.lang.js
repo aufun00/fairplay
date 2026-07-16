@@ -9,6 +9,8 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   lang: "Language",
   lang_short: "En",
   home: "Home",
+  play: "Start",         /* topbar 游戏控件 ▶ 的 aria */
+  pause: "Pause",        /* topbar 游戏控件 ⏸ 的 aria */
 
   /* exit 确认弹窗(尽力清缓存/本地数据后关闭页面) */
   exit_title: "Exit & clear",
@@ -27,11 +29,16 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   /* 主页 · history / recent */
   share_btn: "Share invite",
   qr_open: "↗ New tab",
-  share_msg: "{nick} invites you to play on {site} #{code}",
+  share_msg: "{nick} invites you to play {game} # {code}",
   share_empty: "Pick or create an invite first",
   pick_empty: "No invites yet",
   inv_created: "created",
   memo_ph: "memo",
+
+  /* 游戏结束 · 成绩分享(全站共享,各游戏页复用;{game}=游戏显示名) */
+  score: "Score",
+  game_share_btn: "Share result",
+  game_share: "{nick} scored {score} in {game} # {code}",
 
   /* 主页 · 游戏说明(键名 = 注册表 descKey) */
   game_match3_desc: "Match-3 · clear the board",
@@ -47,6 +54,8 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   lang: "语言",
   lang_short: "中",
   home: "首页",
+  play: "开始",
+  pause: "暂停",
 
   /* exit 确认弹窗 */
   exit_title: "退出并清除",
@@ -65,11 +74,16 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   /* 主页 · history / recent */
   share_btn: "分享邀请",
   qr_open: "↗ 新标签",
-  share_msg: "{nick} 邀请你来 {site} 玩 #{code}",
+  share_msg: "{nick} 邀请你玩 {game} # {code}",
   share_empty: "请先选择或创建一个邀请",
   pick_empty: "还没有邀请",
   inv_created: "创建",
   memo_ph: "备注",
+
+  /* 游戏结束 · 成绩分享(全站共享;{game}=游戏显示名) */
+  score: "分数",
+  game_share_btn: "分享成绩",
+  game_share: "{nick} 得了 {score} 分 在 {game} # {code}",
 
   /* 主页 · 游戏说明 */
   game_match3_desc: "三消 · 清空棋盘",

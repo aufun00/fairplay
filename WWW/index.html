@@ -599,15 +599,12 @@
       document.querySelector("#hm_invite .share").addEventListener("click", function () {
         if (!selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
         var nick = FairPlay.getNickname();
-        var line = (L.share_msg || "{nick} invites you to play on {site} #{code}")
-          .replace("{nick}", nick).replace("{site}", L.logo || "FairPlay").replace("{code}", selected.param.slice(-4));
-        var url = inviteLink(selected);
-        /* 文本只留干净句子;链接走 url 字段(接收 App 一般渲染成"FairPlay"标题卡) */
-        if (navigator.share) {
-          navigator.share({ text: line, url: url }).catch(function () {});
-        } else if (navigator.clipboard) {
-          navigator.clipboard.writeText(line + "\n" + url);
-        }
+        var g = findGame(selected.gameId) || {};
+        var gname = (g.inf && L[g.inf] && L[g.inf].name) || g.key || "";
+        var line = (L.share_msg || "{nick} invites you to play {game} # {code}")
+          .replace("{nick}", nick).replace("{game}", gname).replace("{code}", selected.param.slice(-4));
+        /* 统一走 FairPlay.share(app.js):文本 + 链接(接收 App 一般渲染成"FairPlay"标题卡) */
+        FairPlay.share(line, inviteLink(selected));
       });
 
       /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(矩阵游戏说明、邀请条) */

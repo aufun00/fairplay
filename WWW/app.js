@@ -60,7 +60,10 @@ window.FairPlay.setNickname = function (v) {
 };
 
 /* 通用弹窗原语:造 .fp-overlay 背板 + .fp-card 卡片,调用方用 build(card, close) 填内容。
-   opts: { dismissible=true(点背板关闭), cardClass, build, html } → 返回 { overlay, card, close } */
+   opts: { dismissible=true(点背板关闭), cardClass, build, html,
+           mount:element|selector —— 挂载点决定覆盖范围:默认 #app_frame=全窗(topbar 域);
+                                      传 stage(.app_stage,position:relative)=只盖 stage(app_control 域) }
+   → 返回 { overlay, card, close } */
 window.FairPlay.openModal = function (opts) {
   opts = opts || {};
   var ov = document.createElement("div");
@@ -72,8 +75,17 @@ window.FairPlay.openModal = function (opts) {
   if (opts.dismissible !== false) {
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });   /* 点背板关闭 */
   }
-  (document.getElementById("app_frame") || document.body).appendChild(ov);   /* 先入 DOM,便于 build 里 focus */
+  var mount = opts.mount;
+  if (typeof mount === "string") mount = document.querySelector(mount);
+  (mount || document.getElementById("app_frame") || document.body).appendChild(ov);  /* 先入 DOM,便于 build 里 focus */
   if (typeof opts.build === "function") opts.build(card, close);
   else if (opts.html != null) card.innerHTML = opts.html;
   return { overlay: ov, card: card, close: close };
+};
+
+/* 分享(唯一入口,topbar 域):有原生分享用原生(可带链接),否则复制文本。首页与各游戏结果都调它 */
+window.FairPlay.share = function (text, url) {
+  var data = url ? { text: text, url: url } : { text: text };
+  try { if (navigator.share) { navigator.share(data).catch(function () {}); return; } } catch (e) {}
+  try { if (navigator.clipboard) navigator.clipboard.writeText(url ? (text + "\n" + url) : text); } catch (e) {}
 };

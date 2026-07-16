@@ -1,16 +1,7 @@
-/* FairPlay — 通用结果页 + 分享(所有游戏结束共用,改一处全生效)
+/* FairPlay — 旧版全窗结果页(memory 暂用;match3/mathdoku 已迁到 app_control 的 stage 级结果)。
    FairPlay.showResult({ title, score, scoreLabel, shareText, shareLabel, homeLabel, homeHref })
-   FairPlay.share(text) —— 只发文本(无原生分享则复制) */
+   分享入口 FairPlay.share() 已上移到 app.js。 */
 window.FairPlay = window.FairPlay || {};
-
-window.FairPlay.share = function (text) {
-  try {
-    if (navigator.share) { navigator.share({ text: text }).catch(function () {}); }
-    else if (navigator.clipboard) { navigator.clipboard.writeText(text); }
-  } catch (e) {
-    if (navigator.clipboard) navigator.clipboard.writeText(text);
-  }
-};
 
 window.FairPlay.showResult = function (opts) {
   opts = opts || {};

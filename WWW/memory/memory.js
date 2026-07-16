@@ -24,6 +24,7 @@
   var score = 0, matchedPairs = 0, busy = false, ended = false;
 
   /* ---- UI ---- */
+  /* 注:memory 暂未迁到 app_control 框架(等 match3/mathdoku 定型、总结规则后再接入);仍用自带 HUD + result.js。 */
   var boardEl, pairsEl, scoreEl, cells = [];
   function buildUI() {
     var stage = document.getElementById("memory_stage");
@@ -41,6 +42,7 @@
       })(i);
     }
   }
+
   function render() {
     for (var i = 0; i < N; i++) {
       cells[i].className = "card " + (matched[i] ? "matched" : (faceUp[i] ? "up" : "down"));
@@ -84,14 +86,15 @@
   /* ---- 结束 → 通用结果页 ---- */
   function endGame() {
     if (ended) return; ended = true;
-    var line = (L.mem_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score).replace("{code}", seedParam.slice(-4));
+    var line = (L.game_share || "{nick} scored {score} in {game} # {code}")
+      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score)
+      .replace("{game}", L.game_name || "").replace("{code}", seedParam.slice(-4));
     window.FairPlay.showResult({
       title: L.mem_done || "All matched!",
       score: score,
       scoreLabel: L.score || "Score",
       shareText: (L.logo || "FairPlay") + "\n" + line,   // 只发文本,不发链接
-      shareLabel: L.mem_share_btn || "Share result",
+      shareLabel: L.game_share_btn || "Share result",
       homeLabel: L.home || "Home",
       homeHref: "../"
     });

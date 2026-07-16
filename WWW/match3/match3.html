@@ -20,10 +20,8 @@
   <script>FairPlay.registerSW("../sw.js");</script>
 
   <style>
-    #match3_stage { display: flex; flex-direction: column; padding: .5rem; gap: .5rem; }
-    #match3_hud { display: flex; align-items: baseline; justify-content: center; gap: 1rem; }
-    #match3_clock { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    #match3_score { font-size: 1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    /* stage 通用样式(flex:1/min-height:0/position:relative)在 common.css .app_stage;时间/成绩在控制栏 */
+    #match3_stage { display: flex; flex-direction: column; justify-content: center; padding: .5rem; }
     #match3_board {
       width: 100%; aspect-ratio: 1 / 1;
       display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
@@ -46,9 +44,11 @@
     <!-- 置顶栏(全站一致);logo 回主页 -->
     <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
     <header id="app_topbar"></header>
+    <!-- 控制栏:空壳,内容由 control.js 注入(时间/▶⏸/成绩) -->
+    <div id="app_control"></div>
 
-    <!-- 游戏区:除置顶栏外留空 -->
-    <main id="match3_stage"></main>
+    <!-- 游戏 play 区 -->
+    <main id="match3_stage" class="app_stage"></main>
   </div>
 
   <!-- 版本号 + 通用编码模块 + 本游戏邀请码编解码(供复现棋盘用) -->
@@ -62,8 +62,8 @@
   <script src="../assets/icons.js"></script>
   <script src="../topbar.js"></script>
   <script>FairPlay.applyI18n();</script>
-  <!-- 通用结果页 + 游戏逻辑 -->
-  <script src="../result.js"></script>
+  <!-- 控制栏(时钟/▶⏸/结果)+ 游戏逻辑 -->
+  <script src="../control.js"></script>
   <script src="match3.js"></script>
 </body>
 </html>

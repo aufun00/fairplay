@@ -36,6 +36,7 @@ body{
 .fp-overlay:not([hidden]){
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   background:rgba(0,0,0,.72);
+  z-index:1000;   /* 模态层永远在最上(游戏内可能有带 z-index 的棋格/遮盖层) */
 }
 .fp-overlay .fp-card{
   background:var(--bar-bg); border:1px solid var(--line); border-radius:.6rem;
@@ -115,3 +116,51 @@ body{
 #app_topbar .iconbtn{ border:none; padding:0; background:transparent; }
 /* #app_topbar button{color:--fg}(含 id)优先级高于 .iconbtn:hover,故 hover 也需带 #app_topbar 才能压过 */
 #app_topbar .iconbtn:hover{ color:var(--accent); }
+
+/* ===== 控制栏(游戏页第二区,高同 topbar):左时间框 · 中 ▶/⏸ · 右成绩框 =====
+   由 control.js 注入内容;时间归控制栏(时钟驱动 #app_ctl_time),成绩框 #app_ctl_score = 游戏输出口。
+   ▶/⏸ 居中(避开右上退出/语言误触)。 */
+#app_control{
+  height:var(--bar-h); flex:0 0 auto;
+  background:var(--bar-bg); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+  padding:0 .75rem;
+}
+#app_control:empty{ display:none; }   /* init 前的空壳不占位 */
+.ctl-box{
+  flex:0 1 auto; min-width:4.5rem; text-align:center;
+  background:var(--bg); border:1px solid var(--line); border-radius:.6rem;
+  padding:.15rem .55rem; font-variant-numeric:tabular-nums;
+  color:var(--fg); font-weight:700; font-size:1.15rem; line-height:1.35;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#app_ctl_score{ color:var(--muted); font-weight:600; }
+.ctl-run{
+  flex:0 0 auto; width:2.4rem; height:2.4rem;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--accent); color:#fff; border:none; border-radius:50%; cursor:pointer;
+}
+.ctl-run:disabled{ opacity:.4; cursor:default; }
+.ctl-run .ic{ width:1.4rem; height:1.4rem; }
+
+/* ===== 游戏 play 区(第三区):撑满剩余,并作为 stage 级弹窗/遮盖的定位基准 ===== */
+.app_stage{ flex:1 1 auto; min-height:0; position:relative; overflow:hidden; }
+
+/* stage 级不透明遮盖(开始/暂停,防偷看棋盘)+ 规则/帮助卡 */
+.ctl-cover{
+  position:absolute; inset:0; z-index:900; background:var(--bg);
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+.ctl-cover[hidden]{ display:none; }
+.ctl-cover .ctl-rules{
+  max-width:22rem; text-align:left; color:var(--fg);
+  font-size:.9rem; line-height:1.55; white-space:pre-line;
+}
+/* stage 级结果卡:只放分享(时间/成绩在控制栏、home 在 topbar,均未被遮)*/
+.fp-card .res-title{ font-size:1.05rem; font-weight:700; }
+.fp-card .res-share{
+  width:3.4rem; height:3.4rem; padding:0; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--accent); color:#fff; border:none; border-radius:.7rem;
+}
+.fp-card .res-share .ic{ width:1.9rem; height:1.9rem; }

@@ -82,21 +82,13 @@
   }
 
   /* ---- 渲染 ---- */
-  var boardEl, clockEl, scoreEl, cells = [];
-  var selected = null, score = 0, busy = true, ended = false;
+  var boardEl, scoreEl, cells = [];
+  var selected = null, score = 0, busy = true, ended = false, started = false, ctl = null;
 
   function buildUI() {
     var stage = document.getElementById("match3_stage");
-    stage.innerHTML =
-      '<div id="match3_hud"><div id="match3_clock">30.0s</div><div id="match3_score">0</div></div>' +
-      '<div id="match3_board"></div>' +
-      '<div id="match3_start" class="fp-overlay"><div class="fp-card">' +
-        '<div class="rtitle">#' + seedParam.slice(-4) + '</div>' +
-        '<button id="match3_startbtn">' + (L.m3_start || "Start") + '</button>' +
-      '</div></div>';
+    stage.innerHTML = '<div id="match3_board"></div>';   // HUD/开始遮盖已移到控制栏/control.js
     boardEl = document.getElementById("match3_board");
-    clockEl = document.getElementById("match3_clock");
-    scoreEl = document.getElementById("match3_score");
     for (var k = 0; k < SIZE * SIZE; k++) {
       (function (k) {
         var d = document.createElement("div"); d.className = "cell";
@@ -139,56 +131,36 @@
     }, 120);
   }
 
-  /* ---- 计时(净时钟:performance.now,切后台停表)---- */
-  var startT = 0, pauseAt = 0, timerId = null;
-  function startTimer() {
-    startT = performance.now();
-    timerId = setInterval(updateClock, 100);
-    updateClock();
+  /* ---- 控制栏接线(时钟/显示/超时/开始暂停/结束由 control 统一;倒计 30s → onTimeout)---- */
+  function onRun() {                     // ▶:首次揭盘 + 开局自动消;恢复只放开输入(棋盘/时钟由 control 管)
+    if (!started) {
+      started = true; render();
+      boardEl.classList.add("dropin");
+      setTimeout(function () { boardEl.classList.remove("dropin"); }, 400);
+      stepResolve(false, function () { busy = false; });
+    } else { busy = false; }
   }
-  function updateClock() {
-    if (document.hidden) return;
-    var remain = Math.max(0, DURATION - (performance.now() - startT));
-    clockEl.textContent = (remain / 1000).toFixed(1) + "s";
-    if (remain <= 0) endGame();
-  }
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) pauseAt = performance.now();
-    else if (pauseAt) { startT += performance.now() - pauseAt; pauseAt = 0; }
-  });
+  function onPause() { busy = true; selected = null; }   // ⏸/焦点丢失:屏蔽输入(棋盘已被 cover 遮盖)
 
-  /* ---- 结束 → 成绩 → 分享 ---- */
-  function endGame() {
+  function finish() {                    // 超时 → 结束:禁用按钮 + stage 级分享结果
     if (ended) return; ended = true;
-    clearInterval(timerId);
     busy = true; selected = null; render();
-    clockEl.textContent = "0.0s";
-    var line = (L.m3_share || "{nick} scored {score} in #{code}")
-      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score).replace("{code}", seedParam.slice(-4));
-    window.FairPlay.showResult({
-      title: L.m3_timeup || "Time's up!",
-      score: score,
-      scoreLabel: L.score || "Score",
-      shareText: (L.logo || "FairPlay") + "\n" + line,   // 只发文本,不发链接
-      shareLabel: L.m3_share_btn || "Share result",
-      homeLabel: L.home || "Home",
-      homeHref: "../"
-    });
+    var line = (L.game_share || "{nick} scored {score} in {game} # {code}")
+      .replace("{nick}", FairPlay.getNickname()).replace("{score}", score)
+      .replace("{game}", L.game_name || "").replace("{code}", seedParam.slice(-4));
+    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", shareText: (L.logo || "FairPlay") + "\n" + line });
   }
 
-  /* ---- 启动:先画空棋盘 + Start(不画棋子、不计时,防提前规划)---- */
   function boot() {
-    buildUI();  // 棋盘为空;busy=true 屏蔽输入
-    document.getElementById("match3_startbtn").addEventListener("click", begin);
-  }
-  /* 点 Start → 揭示棋子(掉落动画)→ 开局自动消 → 计时+放开输入 */
-  function begin() {
-    var s = document.getElementById("match3_start");
-    if (s) s.hidden = true;
-    render();
-    boardEl.classList.add("dropin");
-    setTimeout(function () { boardEl.classList.remove("dropin"); }, 400);
-    stepResolve(false, function () { busy = false; startTimer(); });
+    buildUI();   // 空盘;busy=true。棋盘揭示/时钟/开始 均由 control 驱动
+    ctl = window.FairPlay.control.init({
+      stage: "#match3_stage",
+      rules: L.m3_rules || "Swap adjacent fruits to line up 3 or more. Chains score higher. Clear as much as you can before time runs out.",
+      onRun: onRun, onPause: onPause
+    });
+    ctl.setTimer({ mode: "down", duration: DURATION, onTimeout: finish });   // 倒计 30s,超时 finish
+    scoreEl = document.getElementById("app_ctl_score");
+    if (scoreEl) scoreEl.textContent = score;
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

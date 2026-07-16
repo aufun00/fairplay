@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>mathdoku — FairPlay</title>
+  <title>MathDoku — FairPlay</title>
   <link rel="stylesheet" href="../common.css">
 
   <!-- PWA -->
@@ -18,24 +18,107 @@
   <meta name="apple-mobile-web-app-title" content="FairPlay">
   <script src="../app.js"></script>
   <script>FairPlay.registerSW("../sw.js");</script>
+
+  <style>
+    /* ---- 局部主题变量:复用 common.css 的 --bg/--fg/--line/--accent/--muted/--bar-bg;
+           仅笼四色 + 冲突红 + 高亮底色本页自带(默认深色,浅色时 @media 覆盖,同 common.css 结构)---- */
+    :root{
+      --md-warn:#ff6b5b;
+      --md-line-hl:rgba(74,158,255,.18);
+      --md-cage-hl:rgba(224,178,86,.24);
+      --cage0:#58c0a6; --cage1:#d183ac; --cage2:#e0946a; --cage3:#9d8ae6;   /* C 冷调宝石 · 深 */
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --md-warn:#c0392b;
+        --md-line-hl:rgba(63,111,176,.15);
+        --md-cage-hl:rgba(214,158,46,.20);
+        --cage0:#2f8f7a; --cage1:#a1567f; --cage2:#b5673f; --cage3:#6d5bb0; /* C 冷调宝石 · 浅 */
+      }
+    }
+
+    /* ---- 布局:正方棋盘(按宽) → 输入区;时间/成绩在控制栏,开始/暂停遮盖由 control 统一 ---- */
+    #mathdoku_stage{ display:flex; flex-direction:column; padding:.5rem; gap:.5rem; }
+    #app_ctl_time.pen{ color:var(--md-warn); }   /* 罚时闪一下(控制栏时间框)*/
+
+    #md_playzone{ position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center; gap:.6rem; }
+    #md_board{
+      width:100%; aspect-ratio:1 / 1; display:grid; overflow:hidden;
+      border-radius:.4rem; background:transparent; flex:0 0 auto;
+    }
+
+    /* 棋格:上 1/4 目标数栏 + 下 3/4 主体(答案/笔记);彩色粗边=异笼,细线=同笼内部 */
+    .md_cell{
+      position:relative; background:transparent; container-type:size;
+      display:grid; grid-template-rows:1fr 3fr; overflow:hidden;
+      border:0 solid var(--line); cursor:pointer; -webkit-user-select:none; user-select:none;
+    }
+    .md_cell .md_clue{
+      grid-row:1; display:flex; align-items:center; padding:0 4px; line-height:1;
+      font-size:24cqmin; font-weight:700; color:var(--muted); white-space:nowrap; overflow:hidden;
+    }
+    .md_cell .md_main{ grid-row:2; position:relative; }
+    .md_cell .md_val{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-size:56cqmin; font-weight:600; color:var(--fg); pointer-events:none;
+    }
+    .md_cell.given .md_val{ color:var(--muted); font-weight:700; }
+    .md_cell.conflict .md_val{ color:var(--md-warn); }
+    .md_cell.same-num .md_val{ color:var(--accent); }
+    .md_cell .md_notes{ position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); padding:1px; }
+    .md_cell .md_notes span{ display:flex; align-items:center; justify-content:center; font-size:20cqmin; color:var(--muted); line-height:1; }
+    .md_cell.filled .md_notes{ display:none; }
+    /* 高亮层:只动底色/选中环,不碰彩色边框 */
+    .md_cell .md_hlbg{ position:absolute; inset:0; pointer-events:none; z-index:0; }
+    .md_cell.hl-line .md_hlbg{ background:var(--md-line-hl); }
+    .md_cell.hl-cage .md_hlbg{ background:var(--md-cage-hl); }
+    .md_cell.selected .md_hlbg{ box-shadow: inset 0 0 0 4px var(--accent); }
+    .md_cell .md_clue, .md_cell .md_main{ position:relative; z-index:2; }
+
+    /* 输入区:左 3×3 数字键(占多) + 右 2×2 功能键 */
+    #md_input{ flex:0 0 auto; display:flex; gap:.5rem; align-items:flex-start; justify-content:center; width:100%; }
+    #md_numpad{ display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem; width:56%; }
+    #md_funcpad{ display:grid; grid-template-columns:repeat(2,1fr); gap:.4rem; width:38%; }
+    .md_key{
+      aspect-ratio:1 / 1; display:flex; align-items:center; justify-content:center; position:relative;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line); border-radius:.5rem;
+      font-weight:700; font-size:1.4rem; line-height:1; cursor:pointer; -webkit-user-select:none; user-select:none;
+    }
+    .md_key:active{ background:var(--line); }
+    .md_key.blank{ visibility:hidden; }
+    .md_key.dim{ opacity:.35; }
+    .md_key.md_fkey{ font-size:1.25rem; }
+    .md_key .md_num{ font-size:2.1rem; }   /* 数字键大字 */
+    .md_key .md_rem{ position:absolute; top:3px; right:6px; font-size:.62rem; font-weight:600; color:var(--muted); }
+    #md_mode.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+    /* note 模式:数字键变圆(显著提示「现在是记笔记」) */
+    #mathdoku_stage.note .md_numkey{ border-color:var(--accent); border-width:2px; border-radius:50%; }
+    /* 开始/暂停遮盖 + 说明卡由 control.js 统一(.ctl-cover / .ctl-rules,common.css) */
+  </style>
 </head>
 <body>
   <div id="app_frame">
-    <!-- 置顶栏(全站一致);logo 回主页 -->
     <!-- 置顶栏:空壳,内容由 topbar.js 注入(唯一来源) -->
     <header id="app_topbar"></header>
+    <!-- 控制栏:空壳,内容由 control.js 注入(时间/▶⏸/成绩) -->
+    <div id="app_control"></div>
 
-    <!-- 游戏区:除置顶栏外留空 -->
-    <main id="mathdoku_stage"></main>
+    <!-- 游戏 play 区 -->
+    <main id="mathdoku_stage" class="app_stage"></main>
   </div>
 
-  <!-- 版本号 + 通用置顶栏文本 + 游戏专属文本 -->
+  <!-- 版本号 + 本游戏邀请码编解码(mathdoku 不用 FairPack,故无 pack.js) -->
   <script src="../version.js"></script>
+  <script src="mathdoku.invcode.js"></script>
+  <!-- 先通用置顶栏文本,再游戏专属文本 -->
   <script src="../index.lang.js"></script>
   <script src="mathdoku.lang.js"></script>
   <!-- 图标雪碧图 + 置顶栏内容注入(在 applyI18n 翻译之前) -->
   <script src="../assets/icons.js"></script>
   <script src="../topbar.js"></script>
   <script>FairPlay.applyI18n();</script>
+  <!-- 控制栏(时钟/▶⏸/结果)+ 游戏逻辑 -->
+  <script src="../control.js"></script>
+  <script src="mathdoku.js"></script>
 </body>
 </html>
