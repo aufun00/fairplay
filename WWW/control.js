@@ -17,11 +17,11 @@
     var bar = document.getElementById("app_control");
     if (bar) {
       bar.innerHTML =
-        '<div id="app_ctl_time" class="ctl-box">0.0</div>' +
+        '<div class="ctl-side"><div id="app_ctl_time" class="ctl-box">0.0</div></div>' +
         '<button type="button" id="app_ctl_run" class="ctl-run" aria-label="Start">' +
           '<svg class="ic" aria-hidden="true"><use href="#ic_play"/></svg>' +
         '</button>' +
-        '<div id="app_ctl_score" class="ctl-box"></div>';
+        '<div class="ctl-side"><div id="app_ctl_score" class="ctl-box"></div></div>';
     }
     var runBtn = document.getElementById("app_ctl_run");
     var runUse = runBtn ? runBtn.querySelector("use") : null;

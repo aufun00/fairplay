@@ -123,14 +123,15 @@ body{
 #app_control{
   height:var(--bar-h); flex:0 0 auto;
   background:var(--bar-bg); border-bottom:1px solid var(--line);
-  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
-  padding:0 .75rem;
+  display:flex; align-items:center; gap:.5rem;
+  padding:0 .6rem;
 }
 #app_control:empty{ display:none; }   /* init 前的空壳不占位 */
+.ctl-side{ flex:1 1 0; min-width:0; display:flex; justify-content:center; }   /* 左/右半区,框在半区内居中 */
 .ctl-box{
-  flex:0 1 auto; min-width:4.5rem; text-align:center;
+  width:88%; text-align:center;
   background:var(--bg); border:1px solid var(--line); border-radius:.6rem;
-  padding:.15rem .55rem; font-variant-numeric:tabular-nums;
+  padding:.15rem .4rem; font-variant-numeric:tabular-nums;
   color:var(--fg); font-weight:700; font-size:1.15rem; line-height:1.35;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
