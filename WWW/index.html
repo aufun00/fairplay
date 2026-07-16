@@ -105,20 +105,42 @@
       background:var(--accent); color:#fff; border:none; border-radius:.5rem;
     }
     #hm_invite .share .ic{ width:1.75rem; height:1.75rem; }
-    /* history:邀请历史条,撑满整宽、横向滚动;.block 的 .75rem 下内边距即滚动条预留带,不压卡片。
-       顶部内边距收窄,与上方 #hm_invite 贴合成一组 */
-    #hm_history{
-      display:flex; gap:.5rem; align-items:stretch;
-      overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
-      min-height:3.5rem; padding-top:.5rem;
+    /* ---- L0 引导选择屏 & ③ browse 下钻:60% 宽居中 ---- */
+    #hm_l0, #hm_browse{ width:60%; margin:0 auto; }
+    @media (max-width:560px){ #hm_l0, #hm_browse{ width:100%; } }
+    .onb-q{ font-size:1.05rem; color:var(--fg); text-align:center; margin:0 0 1rem; }
+    .onb-btns{ display:flex; flex-direction:column; gap:.6rem; }
+    .onb-btns button, .bc-opts .opt{
+      display:block; width:100%; text-align:left;
+      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
+      border-radius:.5rem; padding:.7rem .8rem; font:inherit; cursor:pointer;
     }
-    #hm_history .pi-empty{ color:var(--muted); font-size:.8rem; align-self:center; }
+    .onb-btns button:hover, .bc-opts .opt:hover{ border-color:var(--accent); }
+
+    /* ③ 面包屑:根/已选层级 chip,横排;点 chip 回该层 */
+    .bc-crumbs{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .bc-chip{
+      background:transparent; color:var(--accent); border:1px solid var(--accent);
+      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
+    }
+    #hm_browse hr{ border:0; border-top:1px solid var(--line); margin:.7rem 0; }
+    .bc-opts{ display:flex; flex-direction:column; gap:.5rem; }
+    /* browse 层选项 = 游戏按钮时:图标 + 名/描述(复用观感) */
+    .bc-opts .opt.game{ display:flex; align-items:center; gap:.6rem; }
+    .bc-opts .opt .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
+    .bc-opts .opt .ginfo{ display:flex; flex-direction:column; min-width:0; }
+    .bc-opts .opt .gname{ font-size:.95rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .bc-opts .opt .gd{ font-size:.78rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* ① history:邀请历史,3 列 × n 行网格 */
+    #hm_history{ display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    #hm_history .pi-empty{ grid-column:1/-1; color:var(--muted); font-size:.8rem; }
     /* PickInv 条目:图标 + 末4位 + 备注/创建时刻 */
     #hm_history .pi-item{
-      position:relative; flex:0 0 auto; width:4.5rem;
+      position:relative;
       display:flex; flex-direction:column; align-items:center; gap:.1rem;
       background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
-      border-radius:.5rem; padding:.3rem; font:inherit; cursor:pointer;
+      border-radius:.5rem; padding:.4rem; font:inherit; cursor:pointer;
       -webkit-user-select:none; user-select:none;
     }
     #hm_history .pi-item.sel{ border-color:var(--accent); }
@@ -137,37 +159,17 @@
     }
     #hm_history .pi-item.confirm .pi-del{ display:flex; }
 
-    /* recent:最近玩过的游戏 MRU 图标行(去重/提最前/越界删尾);点 = 再开一局 */
-    #hm_recent .rec-row{ display:flex; gap:.5rem; overflow:hidden; }
+    /* ② recent:最近玩过的游戏,竖向 button 列表(图标 + 变体名);点 = 再开一局 */
+    #hm_recent .rec-list{ display:flex; flex-direction:column; gap:.5rem; }
+    #hm_recent .rec-empty{ color:var(--muted); font-size:.8rem; }
     #hm_recent .rec-item{
-      flex:0 0 auto; padding:0; cursor:pointer;
-      display:inline-flex; align-items:center; justify-content:center;
-      width:4.5rem; height:4.19rem;                 /* = history 卡 4.5rem × 67px,图标居中 */
+      display:flex; align-items:center; gap:.6rem; text-align:left; cursor:pointer;
       background:var(--bar-bg); color:var(--fg);
-      border:1px solid var(--line); border-radius:.5rem;
+      border:1px solid var(--line); border-radius:.5rem; padding:.7rem .8rem; font:inherit;
     }
-    #hm_recent .rec-item .ic{ width:1.4rem; height:1.4rem; }   /* = history icon */
-
-    /* games:Tab + 矩阵 */
-    .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
-    .tabs button{
-      background:transparent; color:var(--fg); border:1px solid var(--line);
-      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
-    }
-    .tabs button.on{ border-color:var(--accent); color:var(--accent); }
-    .tabs button:disabled{ opacity:.35; cursor:default; }   /* 空的 L1/L2 灰掉 */
-    .tabs button .ic{ width:1.25rem; height:1.25rem; display:block; }
-    .matrix{ display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
-    .matrix .game{
-      display:flex; align-items:center; gap:.5rem; text-align:left; min-width:0;
-      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
-      border-radius:.5rem; padding:.6rem; font:inherit; cursor:pointer;
-      height:4.19rem;                 /* = history 卡 67px(box-sizing:border-box) */
-    }
-    .matrix .game .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
-    .matrix .game .ginfo{ display:flex; flex-direction:column; min-width:0; }
-    .matrix .game .gname{ font-size:.92rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .matrix .game .gd{ font-size:.76rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #hm_recent .rec-item:hover{ border-color:var(--accent); }
+    #hm_recent .rec-item .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
+    #hm_recent .rec-item .gname{ font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
 
   <!-- ==================== DEBUG ONLY ====================
@@ -200,8 +202,18 @@
     <header id="app_topbar"></header>
 
     <main id="hm_content">
-      <!-- invite:QR(跨2行) + param/memo/Share -->
-      <section id="hm_invite" class="block">
+      <!-- L0:引导选择屏(默认视图;logo 回此) -->
+      <section id="hm_l0" class="block" hidden>
+        <p class="onb-q" data-i18n="onb_q">Do you want to publish a challenge?</p>
+        <div class="onb-btns">
+          <button type="button" id="onb_existing" data-i18n="onb_existing">Reshare an existing challenge</button>
+          <button type="button" id="onb_recent" data-i18n="onb_recent">Pick from recently played</button>
+          <button type="button" id="onb_list" data-i18n="onb_list">Pick from the games list</button>
+        </div>
+      </section>
+
+      <!-- ① invite 视图:QR(跨2行) + param/memo/Share -->
+      <section id="hm_invite" class="block" hidden>
         <div class="qr">
           <div class="qr-render"></div>
           <span class="qr-code">QR</span>
@@ -216,22 +228,18 @@
         </button>
       </section>
 
-      <!-- history:邀请历史条(撑满整宽、横向滚动) -->
-      <section id="hm_history" class="block">
+      <!-- ① invite 视图第二部分:history(3 列网格) -->
+      <section id="hm_history" class="block" hidden>
         <div class="pi-empty" data-i18n="pick_empty">No invites yet</div>
       </section>
 
-      <!-- recent:最近玩过的游戏(MRU 图标行,点 = 再开一局;无栏目文字);空则整块隐藏 -->
+      <!-- ② recent 视图:最近玩过的游戏(按钮列表,点 = 再发一局) -->
       <section id="hm_recent" class="block" hidden>
-        <div class="rec-row" id="hm_recent_row"></div>
+        <div class="rec-list" id="hm_recent_row"></div>
       </section>
 
-      <!-- games:L1 时长标签 → L2 类型标签 → L3 游戏按钮(全由 window.GAMES 动态生成) -->
-      <section id="hm_games" class="block">
-        <div class="tabs" id="hm_l1"></div>
-        <div class="tabs" id="hm_l2"></div>
-        <div class="matrix" id="hm_list"></div>
-      </section>
+      <!-- ③ browse 视图:面包屑逐级下钻(L1 时长 → L2 类型 → 游戏),内容由 renderBrowse 生成 -->
+      <section id="hm_browse" class="block" hidden></section>
     </main>
   </div>
 
@@ -450,7 +458,8 @@
         history.unshift({ gameId: game.id, param: param, memo: "", ts: Date.now() });
         saveHistory();
         selectEntry(history[0]);
-        touchRecent(game.id);          // 更新最近玩过(去重提最前 + 越界删尾)
+        touchRecent(game.id);          // 更新最近玩过(去重提最前)
+        showView("invite");            // 建完跳①(自动选中最新那条,已在 selectEntry)
       }
 
       /* ---- Recent(最近玩过的游戏;MRU:去重 + 提到最前 + 越界删尾;本地持久化)---- */
@@ -459,7 +468,7 @@
       function saveRecent() { try { localStorage.setItem(RKEY, JSON.stringify(recent)); } catch (e) {} }
       var recent = loadRecent();
 
-      /* 玩了某游戏:该 id 提到最前(已存在则先摘出),存盘后重渲染裁剪 */
+      /* 玩了某游戏:该 id 提到最前(已存在则先摘出),存盘后重渲染 */
       function touchRecent(gameId) {
         var i = recent.indexOf(gameId);
         if (i >= 0) recent.splice(i, 1);
@@ -467,41 +476,35 @@
         saveRecent();
         renderRecent();
       }
-      /* 渲染 recent 行:逐个画 icon,再按容器宽裁掉尾部溢出;空则整块隐藏 */
+      /* 渲染 recent:竖向 button 列表(图标 + 变体名);点 = 再发一局。
+         空则显空态(区块显隐由 showView 管,不在此隐藏) */
       function renderRecent() {
-        var sec = document.getElementById("hm_recent");
         var box = document.getElementById("hm_recent_row");
         box.innerHTML = "";
         var before = recent.length;
         recent = recent.filter(function (id) { return findGame(id); });   // 注册表里没了的丢弃
         if (recent.length !== before) saveRecent();
-        if (!recent.length) { sec.hidden = true; return; }
-        sec.hidden = false;
+        if (!recent.length) {
+          var e = document.createElement("div"); e.className = "rec-empty";
+          e.textContent = L.recent_empty || "No recent games";
+          box.appendChild(e);
+          return;
+        }
         recent.forEach(function (id) {
           var g = findGame(id);
+          var t = L[g.inf] || {};
           var b = document.createElement("button"); b.className = "rec-item";
-          b.innerHTML = icoSvg(g.icon);
+          b.innerHTML = icoSvg(g.icon) + '<span class="gname"></span>';
+          b.querySelector(".gname").textContent = t.name || g.key;
           b.addEventListener("click", function () { startRound(g); });
           box.appendChild(b);
         });
-        trimRecentToFit(box);
-      }
-      /* 越界裁剪:行 nowrap,内容宽超过可视宽就从尾部删,直到装得下(数据同步删) */
-      function trimRecentToFit(box) {
-        if (!box.clientWidth) return;                 // 未布局(如隐藏)时不裁,避免误删
-        var changed = false;
-        while (box.children.length > 1 && box.scrollWidth > box.clientWidth) {
-          box.removeChild(box.lastElementChild); recent.pop(); changed = true;
-        }
-        if (changed) saveRecent();
       }
 
-      /* ---- games:L1 时长 → L2 类型 → L3 游戏,全由 window.GAMES 生成;没游戏的标签灰掉 ---- */
-      var curL1 = 0, curL2 = 0;
+      /* ---- games 树辅助(window.GAMES;没游戏的分类不显,避免死路)---- */
       function icoSvg(id) { return '<svg class="ic" aria-hidden="true"><use href="#ic_' + id + '"/></svg>'; }
       function l2Full(l2) { return l2.games && l2.games.length > 0; }
       function l1Full(l1) { return l1.subs.some(l2Full); }
-      function firstL2(l1) { for (var i = 0; i < l1.subs.length; i++) if (l2Full(l1.subs[i])) return i; return -1; }
       /* 在 window.GAMES 树里按 id 找游戏(history 图标 / QR 打开 / 路由都用) */
       function findGame(id) {
         for (var i = 0; i < catalog.length; i++)
@@ -517,82 +520,83 @@
         if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
         return url;
       }
+      /* 分类文案(L.cat[key] = {name, desc});缺则回退 key */
+      function catInfo(node) { return (L.cat && L.cat[node.key]) || {}; }
 
-      function tabButton(iconId, on, enabled, onClick) {
-        var b = document.createElement("button");
-        if (on) b.classList.add("on");
-        b.innerHTML = icoSvg(iconId);
-        if (!enabled) b.disabled = true; else b.addEventListener("click", onClick);
+      /* ---- 视图状态机:l0 引导屏 / ① invite / ② recent / ③ browse ---- */
+      var curView = "l0";
+      function showView(name) {
+        curView = name;
+        document.getElementById("hm_l0").hidden = (name !== "l0");
+        document.getElementById("hm_invite").hidden = (name !== "invite");
+        document.getElementById("hm_history").hidden = (name !== "invite");
+        document.getElementById("hm_recent").hidden = (name !== "recent");
+        document.getElementById("hm_browse").hidden = (name !== "browse");
+        if (name === "invite") {
+          if (!selected && history.length) selectEntry(history[0]);   // 自动选中最新
+          renderPickInv();
+          syncSquares();
+        } else if (name === "recent") {
+          renderRecent();
+        } else if (name === "browse") {
+          bL1 = null; bL2 = null;                                     // 进入 = 回 L1
+          renderBrowse();
+        }
+      }
+
+      /* ---- ③ browse:面包屑逐级下钻(L1 时长 → L2 类型 → 游戏)---- */
+      var bL1 = null, bL2 = null;
+      function crumbChip(label, onClick) {
+        var b = document.createElement("button"); b.className = "bc-chip";
+        b.textContent = label; b.addEventListener("click", onClick);
         return b;
       }
-      function renderL1() {
-        var box = document.getElementById("hm_l1"); box.innerHTML = "";
-        catalog.forEach(function (l1, i) {
-          box.appendChild(tabButton(l1.icon, i === curL1, l1Full(l1), function () {
-            curL1 = i; curL2 = firstL2(catalog[i]); saveTab(); renderL1(); renderL2(); renderList();
-          }));
-        });
-      }
-      function renderL2() {
-        var box = document.getElementById("hm_l2"); box.innerHTML = "";
-        catalog[curL1].subs.forEach(function (l2, i) {
-          box.appendChild(tabButton(l2.icon, i === curL2, l2Full(l2), function () {
-            curL2 = i; saveTab(); renderL2(); renderList();
-          }));
-        });
-      }
-      function renderList() {
-        var box = document.getElementById("hm_list"); box.innerHTML = "";
-        var subs = catalog[curL1].subs;
-        var list = (curL2 >= 0 && subs[curL2]) ? subs[curL2].games : [];
-        list.forEach(function (game) {
-          var t = L[game.inf] || {};
-          var b = document.createElement("button"); b.className = "game";
-          b.innerHTML = icoSvg(game.icon) +
-            '<span class="ginfo"><span class="gname"></span><span class="gd"></span></span>';
-          b.querySelector(".gname").textContent = t.name || game.key;
-          b.querySelector(".gd").textContent = t.desc || "";
-          b.addEventListener("click", function () { startRound(game); });
-          box.appendChild(b);
-        });
-      }
-      /* 记忆选择:存 {sig,l1key,l2key};games.js 改了(结构签名变)则恢复失败 → 回默认 */
-      function catSig() {
-        return catalog.map(function (l1) {
-          return l1.key + ":" + l1.subs.map(function (l2) {
-            return l2.key + "(" + l2.games.map(function (g) { return g.id; }).join(",") + ")";
-          }).join("|");
-        }).join(";");
-      }
-      function saveTab() {
-        try {
-          var l2 = catalog[curL1] && catalog[curL1].subs[curL2];
-          localStorage.setItem("fairplay.tab", JSON.stringify({ sig: catSig(), l1: catalog[curL1].key, l2: l2 ? l2.key : "" }));
-        } catch (e) {}
-      }
-      function restoreTab() {
-        try {
-          var s = JSON.parse(localStorage.getItem("fairplay.tab"));
-          if (!s || s.sig !== catSig()) return false;   // games.js 改过 → 不恢复
-          for (var i = 0; i < catalog.length; i++) {
-            if (catalog[i].key === s.l1 && l1Full(catalog[i])) {
-              for (var j = 0; j < catalog[i].subs.length; j++) {
-                if (catalog[i].subs[j].key === s.l2 && l2Full(catalog[i].subs[j])) { curL1 = i; curL2 = j; return true; }
-              }
-            }
-          }
-        } catch (e) {}
-        return false;
-      }
-      function renderGames() {
-        if (!catalog.length) return;
-        if (!restoreTab()) {                              // 无记忆 / 失效 / catalog 变 → 默认
-          curL1 = 0;
-          for (var i = 0; i < catalog.length; i++) if (l1Full(catalog[i])) { curL1 = i; break; }
-          curL2 = firstL2(catalog[curL1]);
+      function renderBrowse() {
+        var box = document.getElementById("hm_browse"); box.innerHTML = "";
+        /* 面包屑:③根 → L1名 → L2名(点回该层) */
+        var crumbs = document.createElement("div"); crumbs.className = "bc-crumbs";
+        crumbs.appendChild(crumbChip(L.onb_list || "Games list", function () { bL1 = null; bL2 = null; renderBrowse(); }));
+        if (bL1 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1]).name || catalog[bL1].key, function () { bL2 = null; renderBrowse(); }));
+        if (bL2 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1].subs[bL2]).name || catalog[bL1].subs[bL2].key, function () { renderBrowse(); }));
+        box.appendChild(crumbs);
+        box.appendChild(document.createElement("hr"));
+        var opts = document.createElement("div"); opts.className = "bc-opts";
+        box.appendChild(opts);
+
+        if (bL2 != null) {                                  // 最深层 = 游戏列表
+          catalog[bL1].subs[bL2].games.forEach(function (game) {
+            var t = L[game.inf] || {};
+            var b = document.createElement("button"); b.className = "opt game";
+            b.innerHTML = icoSvg(game.icon) + '<span class="ginfo"><span class="gname"></span><span class="gd"></span></span>';
+            b.querySelector(".gname").textContent = t.name || game.key;
+            b.querySelector(".gd").textContent = t.desc || "";
+            b.addEventListener("click", function () { startRound(game); });
+            opts.appendChild(b);
+          });
+        } else if (bL1 != null) {                           // L2 类型(只显有游戏的)
+          catalog[bL1].subs.forEach(function (l2, j) {
+            if (!l2Full(l2)) return;
+            var b = document.createElement("button"); b.className = "opt";
+            b.textContent = catInfo(l2).name || l2.key;
+            b.addEventListener("click", function () { bL2 = j; renderBrowse(); });
+            opts.appendChild(b);
+          });
+        } else {                                            // L1 时长(只显有游戏的),显 desc
+          catalog.forEach(function (l1, i) {
+            if (!l1Full(l1)) return;
+            var c = catInfo(l1);
+            var b = document.createElement("button"); b.className = "opt";
+            b.textContent = c.desc || c.name || l1.key;
+            b.addEventListener("click", function () { bL1 = i; bL2 = null; renderBrowse(); });
+            opts.appendChild(b);
+          });
         }
-        renderL1(); renderL2(); renderList();
       }
+
+      /* L0 三按钮 → 三条路 */
+      document.getElementById("onb_existing").addEventListener("click", function () { showView("invite"); });
+      document.getElementById("onb_recent").addEventListener("click", function () { showView("recent"); });
+      document.getElementById("onb_list").addEventListener("click", function () { showView("browse"); });
 
       /* 分享按钮:拉起系统分享 "{nickname} invites you to play" + 邀请链接
          (无原生分享则复制文本) */
@@ -607,17 +611,16 @@
         FairPlay.share(line, inviteLink(selected));
       });
 
-      /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(矩阵游戏说明、邀请条) */
+      /* 语言就地切换:更新 L 引用 + 重渲染当前视图按 L 动态生成的部分
+         (L0 静态文案由 applyI18n 走 data-i18n 处理) */
       window.addEventListener("fairplay:langchange", function () {
         L = (window.I18N && window.I18N[window.FairPlay.getLang()]) || {};
-        renderGames();
-        renderPickInv();
+        if (curView === "invite") renderPickInv();
+        else if (curView === "recent") renderRecent();
+        else if (curView === "browse") renderBrowse();
       });
 
-      renderGames();
-      renderPickInv();
-      renderRecent();
-      syncSquares();
+      showView("l0");
     })();
   </script>
 </body>

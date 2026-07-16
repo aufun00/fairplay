@@ -35,6 +35,22 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
   inv_created: "created",
   memo_ph: "memo",
 
+  /* 主页 · 引导式 onboarding(L0 选择屏 + ③ 面包屑) */
+  onb_q: "Want to publish a challenge?",
+  onb_existing: "Reshare an existing challenge",
+  onb_recent: "Pick from recently played",
+  onb_list: "Pick from the games list",
+  recent_empty: "No recent games yet",
+  /* 分类文案(键 = games.js 的 key;L1 有 name/desc,L2 有 name) */
+  cat: {
+    flash: { name: "Flash", desc: "Quick challenges under a minute" },
+    quick: { name: "Quick", desc: "A casual few-minute challenge" },
+    deep:  { name: "Deep",  desc: "Longer, tougher challenges" },
+    party: { name: "Party", desc: "Great for group play" },
+    puzzle: { name: "Puzzle" }, match: { name: "Match" }, arcade: { name: "Arcade" },
+    board: { name: "Board" }, card: { name: "Card" }, word: { name: "Word" }, number: { name: "Number" },
+  },
+
   /* 游戏结束 · 成绩分享(全站共享,各游戏页复用;{game}=游戏显示名) */
   score: "Score",
   game_share_btn: "Share result",
@@ -79,6 +95,22 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   pick_empty: "还没有邀请",
   inv_created: "创建",
   memo_ph: "备注",
+
+  /* 主页 · 引导式 onboarding(L0 选择屏 + ③ 面包屑) */
+  onb_q: "你想发布一个挑战吗？",
+  onb_existing: "发布一个已存在的挑战",
+  onb_recent: "从最近玩过的游戏中选择",
+  onb_list: "从游戏列表中选择",
+  recent_empty: "还没有玩过的游戏",
+  /* 分类文案(键 = games.js 的 key;L1 有 name/desc,L2 有 name) */
+  cat: {
+    flash: { name: "闪玩", desc: "1 分钟以内的快速挑战" },
+    quick: { name: "快玩", desc: "几分钟的一般挑战" },
+    deep:  { name: "深玩", desc: "耗时较长的困难挑战" },
+    party: { name: "聚会", desc: "适合聚会的游戏" },
+    puzzle: { name: "益智" }, match: { name: "消除" }, arcade: { name: "动作" },
+    board: { name: "棋类" }, card: { name: "牌类" }, word: { name: "文字" }, number: { name: "数字" },
+  },
 
   /* 游戏结束 · 成绩分享(全站共享;{game}=游戏显示名) */
   score: "分数",
