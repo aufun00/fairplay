@@ -56,6 +56,56 @@ window.FairPack = (function () {
     return arr;
   }
 
+  /* ---- 确定性 PRNG(mulberry32,纯 32 位整数运算 → 跨引擎/CPU/OS 逐位一致)。
+     同 seed 在任何终端产出同一条流;序列路径不碰浮点/时间,故公平可复现。 ---- */
+  function rng(seed) {
+    var a = seed >>> 0;
+    function next() {                                   // → 0 .. 2^32-1
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), 1 | t);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return (t ^ (t >>> 14)) >>> 0;
+    }
+    function int(n) {                                   // 无偏 [0,n):拒绝采样去掉尾巴
+      if (n <= 1) return 0;
+      var lim = 0x100000000 - (0x100000000 % n);        // 不做 >>>0(保留 2^32);n | 2^32 整除时 lim=2^32,永不拒绝
+      var r; do { r = next(); } while (r >= lim);
+      return r % n;
+    }
+    function shuffle(arr) {                              // Fisher-Yates(原地),随机源 = 本 PRNG
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = int(i + 1), t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+    return { next: next, int: int, shuffle: shuffle };
+  }
+
+  /* ---- 邀请码 seed 载荷:把 (durIdx, seed) 打进一个 base58 码(校验位罩住,~7 字符)。
+     n = seed × DUR_RADIX + durIdx;durIdx 藏在 32 位 seed 编码的天然余量里(码长不变)。
+     encodeSeed 创建端用 Math.random 掷 32 位 seed(此后全程确定性);decodeSeed 反解。 ---- */
+  var DUR_RADIX = 8;                                     // 预留 8 档时长(2³²×8 ≤ 58⁶ → 6 位封顶)
+  var SEED_WIDTH = 6;                                    // 定长 6 位主体(左填 ALPHABET[0])+ 1 校验 = 恒 7 字符
+  function encodeSeed(durIdx) {
+    var seed = Math.floor(Math.random() * 0x100000000) >>> 0;
+    var n = BigInt(seed) * BigInt(DUR_RADIX) + BigInt((durIdx | 0) % DUR_RADIX);
+    var body = encode(n);
+    while (body.length < SEED_WIDTH) body = ALPHABET[0] + body;   // 左填充 → 恒定长度
+    return addCheck(body);
+  }
+  function decodeSeed(str) {
+    if (typeof str !== "string") return null;
+    var body = stripCheck(str.trim());
+    if (body === null) return null;
+    var n = decode(body);
+    if (n === null) return null;
+    var durIdx = Number(n % BigInt(DUR_RADIX));
+    var seed = n / BigInt(DUR_RADIX);
+    if (seed > 0xFFFFFFFFn) return null;                 // 越界(老格式长码等)= 非法
+    return { seed: Number(seed) >>> 0, durIdx: durIdx };
+  }
+
   /* digits(每位 0..base-1)→ 当 base 进制大数 → base58 + 校验 */
   function packBase(digits, base) {
     const b = BigInt(base);
@@ -79,6 +129,7 @@ window.FairPack = (function () {
   return {
     ALPHABET: ALPHABET, encode: encode, decode: decode,
     addCheck: addCheck, stripCheck: stripCheck,
-    shuffle: shuffle, packBase: packBase, unpackBase: unpackBase
+    shuffle: shuffle, packBase: packBase, unpackBase: unpackBase,
+    rng: rng, encodeSeed: encodeSeed, decodeSeed: decodeSeed
   };
 })();

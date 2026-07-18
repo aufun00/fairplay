@@ -93,16 +93,13 @@
     window.addEventListener("blur", function () { pause(); });
 
     /* ---- stage 级结果弹窗:三出口(留在游戏内快速传播 + 一条引流)。
-       游戏只传 { title, gameName, score };id/cfg/param/key 由本函数从自身 URL 读,
-       codec 取 FAIRPLAY_CODECS[key],邀请链接拼站点根(index.html 路由器)。 ---- */
+       游戏只传 { title, gameName, score };id/param 由本函数从自身 URL 读,
+       新挑战码由 FairPack.encodeSeed 现掷(保留当前局时长 durIdx),邀请链接拼站点根(index.html 路由器)。 ---- */
     function showResult(o) {
       if (!(window.FairPlay && FairPlay.openModal)) return;
       var L = (window.FairPlay && FairPlay.L && FairPlay.L()) || {};
       var q = new URLSearchParams(location.search);
-      var id = q.get("g"), cfg = q.get("c") || "", seedParam = q.get("p") || "";
-      var m = location.pathname.match(/([^/]+)\/[^/]+$/);          // 路径倒数第二段 = 游戏 key
-      var key = m ? m[1] : "";
-      var codec = (window.FAIRPLAY_CODECS || {})[key];
+      var id = q.get("g"), seedParam = q.get("p") || "";
       var root = new URL("../", location.href).href;               // 站点根 = 路由器入口
       var gameName = o.gameName || "";
       function link(param) { return root + "?g=" + id + "&p=" + encodeURIComponent(param); }
@@ -134,10 +131,11 @@
           card.querySelector(".res-score").addEventListener("click", function () {
             FairPlay.share(scoreText(), link(seedParam));
           });
-          /* ② 发起我的挑战:现生成新 iCode → 存 history → 分享,停留 */
+          /* ② 发起我的挑战:现掷新 seed(同当前局时长)→ 存 history → 分享,停留 */
           card.querySelector(".res-new").addEventListener("click", function () {
-            if (!codec) return;
-            var newP = cfg ? codec.encode(cfg) : codec.encode();
+            if (!window.FairPack) return;
+            var d = FairPack.decodeSeed(seedParam);
+            var newP = FairPack.encodeSeed(d ? d.durIdx : 0);
             if (FairPlay.pushHistory) FairPlay.pushHistory({ gameId: +id, param: newP, memo: "", ts: Date.now() });
             FairPlay.share(challengeText(newP), link(newP));
           });

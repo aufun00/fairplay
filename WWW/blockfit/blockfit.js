@@ -1,39 +1,28 @@
-/* FairPlay — blockfit(方块填格):8×8 空盘,一次发 3 块(19 种、不旋转),摆满整行/整列即消。
-   双结束:限时到点 or 手上 3 块全无处可放。双档计分见 scoreClear()。
+/* FairPlay — blockfit(方块填格):BOARD×BOARD 空盘,一次发 3 块(19 种、不旋转),摆满整行/整列即消。
+   双结束:限时到点 or 手上 3 块全无处可放。计分见 resolveClears()。
    设计立意:base 方向 + 指数系数,平衡「布局流(憋大消/连消)」与「手速流(走量/抢时间)」。
-   序列:5×5 种子(1~25 排列)→ match3 式行列置换拉长 → 读值 1~19→块、20~25 跳过 = 均匀 19-bag(确定性同题)。 */
+   凭邀请码进:?g=<id> 定游戏(查注册表拿 board/durs),?p=<code> 经 FairPack.decodeSeed 解出 {seed, durIdx}。
+   序列:seed → 确定性 PRNG(FairPack.rng)洗一袋 [1..19]、发完再洗 = 均匀 19-bag(同 seed 同题,跨端逐位一致)。 */
 (function () {
-  var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.blockfit;
-
-  /* ---- 取种子:gamepage 只能凭邀请码进 ---- */
+  /* ---- 凭邀请码进:?p → {seed,durIdx};无 / 校验不过 → 回主页 ---- */
   var q = new URLSearchParams(location.search);
-  var p = q.get("p");
-  var dec = (p && codec) ? codec.decode(p) : null;
+  var dec = window.FairPack ? FairPack.decodeSeed(q.get("p")) : null;
   if (!dec) { location.replace("../"); return; }
-  var seedParam = p, seedGrid = dec.grid;               // 25 值(1~25 排列)
 
-  /* ---- cfg「棋盘,秒」;秒=0 → 无限(正计时、无 timeout)---- */
-  var cfgA = (q.get("c") || "8,0").split(",");
-  var BOARD = parseInt(cfgA[0], 10) || 8;
-  var LIMIT = parseInt(cfgA[1], 10) || 0;               // 秒
-  var TIMED = LIMIT > 0;
-
-  /* ---- 按 ?g 在注册表查自己:显示名(dsp_dsc_idx)/ 是否续玩(resume)---- */
+  /* ---- 按 ?g 在注册表(平铺 typed 树)查自己:board / durs → 尺寸与时长 ---- */
   function findGameById(id) {
     var g = window.GAMES || [];
-    for (var i = 0; i < g.length; i++) for (var j = 0; j < g[i].subs.length; j++) {
-      var gs = g[i].subs[j].games;
-      for (var k = 0; k < gs.length; k++) if (gs[k].id === id) return gs[k];
-    }
+    for (var i = 0; i < g.length; i++) if (g[i].node_type === "game" && g[i].id === id) return g[i];
     return null;
   }
-  var myEntry = findGameById(parseInt(q.get("g"), 10));
-  var DSPIDX = myEntry ? myEntry.dsp_dsc_idx : "";
-  var RESUME = !!(myEntry && myEntry.resume);
-  function gameName() { var LL = (window.FairPlay && FairPlay.L()) || {}; return (LL[DSPIDX] && LL[DSPIDX].name) || "blockfit"; }
+  var node = findGameById(parseInt(q.get("g"), 10));
+  var BOARD = (node && node.board) || 8;
+  var durs = (node && node.durs) || [30];
+  var LIMIT = durs[dec.durIdx] || durs[0];              // 秒(30/60,均限时)
+  function gameName() { var LL = (window.FairPlay && FairPlay.L()) || {}; return (LL.blockfit && LL.blockfit.name) || "blockfit"; }
   function L() { return (window.FairPlay && FairPlay.L()) || {}; }
 
-  /* ---- 19 种块(单元格偏移 [row,col]),不旋转;20~25 = 跳过位 ---- */
+  /* ---- 19 种块(单元格偏移 [row,col]),不旋转 ---- */
   var PIECES = {
     1:[[0,0]],
     2:[[0,0],[0,1]], 3:[[0,0],[1,0]],
@@ -48,30 +37,17 @@
   };
   function colorFor(v) { return "hsl(" + ((v * 47) % 360) + " 62% 56%)"; }
 
-  /* ---- 确定性流:5×5 网格,读满一轮(25 格)就行列置换一次拉长(照 match3)---- */
-  function makeStream(seed) {
-    var g = seed.slice(), seg = 0, idx = 0;
-    function swapRows(a, b) { for (var c = 0; c < 5; c++) { var i = a*5+c, j = b*5+c, t = g[i]; g[i] = g[j]; g[j] = t; } }
-    function swapCols(a, b) { for (var r = 0; r < 5; r++) { var i = r*5+a, j = r*5+b, t = g[i]; g[i] = g[j]; g[j] = t; } }
-    function permute(s) {
-      var a = s % 5, b = (s*2+1) % 5; if (b === a) b = (b+1) % 5;
-      var c = (s*3+2) % 5, d = (s+4) % 5; if (d === c) d = (d+1) % 5;
-      swapRows(a, b); swapCols(c, d);
-    }
-    return {
-      next: function () { if (idx === 25) { seg++; permute(seg); idx = 0; } return g[idx++]; },
-      state: function () { return { g: g.slice(), seg: seg, idx: idx }; },
-      restore: function (s) { g = s.g.slice(); seg = s.seg; idx = s.idx; }
-    };
-  }
-  var stream = makeStream(seedGrid);
-  function nextBlock() { var v; do { v = stream.next(); } while (v > 19); return v; }   // 均匀 19-bag(跳过 20~25)
+  /* ---- 确定性 19-bag:PRNG 洗 [1..19]、发完再洗(每块每轮恰一次,均匀且跨端同序)---- */
+  var rng = FairPack.rng(dec.seed);
+  var bag = [], bagIdx = 0;
+  function refillBag() { bag = []; for (var v = 1; v <= 19; v++) bag.push(v); rng.shuffle(bag); bagIdx = 0; }
+  function nextBlock() { if (bagIdx >= bag.length) refillBag(); return bag[bagIdx++]; }
 
   /* ---- 状态 ---- */
   var board = [];                                       // BOARD*BOARD,0=空,否则块 idx(用于上色)
   for (var z = 0; z < BOARD * BOARD; z++) board.push(0);
   var tray = [0, 0, 0];                                 // 当前 3 块(0=已放/空槽)
-  var score = 0, combo = 0, totalCleared = 0, ended = false;
+  var score = 0, combo = 0, ended = false;
   var ctl, cells = [], slots = [], boardEl = null, drag = null;
 
   function deal() { tray = [nextBlock(), nextBlock(), nextBlock()]; }
@@ -91,21 +67,18 @@
 
   /* ---- 消除 + 计分 ----
      每次消除得分 = base × 2^(lines-1) × 2^(combo-1)
-       base:限时 = 剩余倒计时(剩余 ms/100,30s 峰值 300);无限 = 累计消除总格数(含本次)
-       lines = 该步同时消的行+列数;combo = 连消计数(有消则 +1,某步没消清零) */
-  function timeBase() { return TIMED ? Math.max(0, Math.floor((LIMIT * 1000 - ctl.elapsed()) / 100)) : 0; }
+       base = 剩余倒计时(剩余 ms/100,30s 峰值 300);lines = 该步同时消的行+列数;combo = 连消计数 */
+  function timeBase() { return Math.max(0, Math.floor((LIMIT * 1000 - ctl.elapsed()) / 100)); }
   function resolveClears() {
     var rows = [], cols = [], r, c, full;
     for (r = 0; r < BOARD; r++) { full = true; for (c = 0; c < BOARD; c++) if (!board[r*BOARD+c]) { full = false; break; } if (full) rows.push(r); }
     for (c = 0; c < BOARD; c++) { full = true; for (r = 0; r < BOARD; r++) if (!board[r*BOARD+c]) { full = false; break; } if (full) cols.push(c); }
     var lines = rows.length + cols.length;
     if (lines > 0) {
-      var cleared = rows.length * BOARD + cols.length * BOARD - rows.length * cols.length;
       rows.forEach(function (rr) { for (var cc = 0; cc < BOARD; cc++) board[rr*BOARD+cc] = 0; });
       cols.forEach(function (cc) { for (var rr = 0; rr < BOARD; rr++) board[rr*BOARD+cc] = 0; });
       combo++;
-      var base = TIMED ? timeBase() : (totalCleared += cleared, totalCleared);
-      score += base * Math.pow(2, lines - 1) * Math.pow(2, combo - 1);
+      score += timeBase() * Math.pow(2, lines - 1) * Math.pow(2, combo - 1);
     } else {
       combo = 0;
     }
@@ -119,7 +92,7 @@
     tray[i] = 0;
     resolveClears();
     if (tray[0] === 0 && tray[1] === 0 && tray[2] === 0) deal();   // 3 块放完 → 补发
-    render(); save();
+    render();
     var rem = tray.filter(function (x) { return x > 0; });
     if (rem.length && rem.every(function (x) { return !anyFits(PIECES[x]); })) endGame("nofit");
   }
@@ -208,26 +181,9 @@
     s.appendChild(pg);
   }
 
-  /* ---- 续玩存取(仅 resume 档)key = seedParam ---- */
-  function saveKey() { return "fairplay.blockfit." + seedParam; }
-  function save() {
-    if (!RESUME || ended) return;
-    try {
-      localStorage.setItem(saveKey(), JSON.stringify({
-        board: board, tray: tray, score: score, combo: combo, total: totalCleared,
-        stream: stream.state(), el: ctl ? ctl.elapsed() : 0
-      }));
-    } catch (e) {}
-  }
-  function loadSave() {
-    try { var s = JSON.parse(localStorage.getItem(saveKey())); return (s && s.board && s.board.length === BOARD * BOARD) ? s : null; } catch (e) { return null; }
-  }
-  function clearSave() { try { localStorage.removeItem(saveKey()); } catch (e) {} }
-
   /* ---- 结束(双条件都走这里)---- */
   function endGame(kind) {
     if (ended) return; ended = true;
-    clearSave();
     ctl.end(kind, {
       title: (kind === "timeout" ? L().bf_timeup : L().bf_over) || "Game over",
       gameName: gameName(), score: score
@@ -235,7 +191,7 @@
   }
 
   function onRun() { render(); }
-  function onPause() { cancelDrag(); render(); save(); }
+  function onPause() { cancelDrag(); render(); }
 
   /* ---- 启动 ---- */
   function buildUI() {
@@ -256,22 +212,13 @@
 
   function boot() {
     buildUI();
-    var saved = RESUME ? loadSave() : null;
-    if (saved) {
-      board = saved.board.slice(); tray = saved.tray.slice();
-      score = saved.score || 0; combo = saved.combo || 0; totalCleared = saved.total || 0;
-      stream.restore(saved.stream);
-    } else {
-      deal();
-    }
+    deal();
     ctl = window.FairPlay.control.init({
       stage: "#blockfit_stage",
       rules: L().bf_rules || "Place all three pieces. Fill a row or column to clear it.",
-      onRun: onRun, onPause: onPause,
-      startElapsed: (saved && TIMED) ? (saved.el || 0) : 0
+      onRun: onRun, onPause: onPause
     });
-    if (TIMED) ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: function () { endGame("timeout"); } });
-    else ctl.setTimer({ mode: "up" });
+    ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: function () { endGame("timeout"); } });
     render(); paintScore();
   }
 

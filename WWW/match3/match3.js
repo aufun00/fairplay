@@ -1,36 +1,41 @@
-/* FairPlay — match3 游戏(先走通流程的通用三消)
-   种子来自 ?p=<param>(对手同题复现)或无参时现生成(自己开一局)。
-   种子 6×6 → 确定性取流器(行列交换读)→ 铺满 8×8 + 掉落流(同种子=同一局)。
-   30.0s 倒计时(performance.now,切后台停表)→ 到点显示成绩 → 分享。 */
+/* FairPlay — match3 游戏(通用三消:今天谁洗碗)。
+   凭邀请码进:?g=<id> 定游戏(查注册表拿 board/durs),?p=<code> 经 FairPack.decodeSeed 解出 {seed, durIdx}。
+   seed → 确定性 PRNG(FairPack.rng)→ 洗一袋均衡颜色、发完再洗 = 无限均匀色流(同 seed 同局,跨端逐位一致)。
+   倒计时时长 = durs[durIdx](30/60s)→ 到点显示成绩 → 分享。 */
 (function () {
-  var SIZE = 8, DURATION = 30000;
   var DISHES = ["", "🍽️", "🥣", "☕", "🍵", "🍴", "🥄"]; // 1..6(餐具:盘/碗/杯/茶/叉勺/勺)
-
-  var codec = window.FAIRPLAY_CODECS && window.FAIRPLAY_CODECS.match3;
+  var COLORS = 6;
   var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
 
-  /* ---- 取种子:gamepage 只能凭邀请码进。无 ?p / 校验不过 = 非正常流程 → 回主页 ---- */
-  var p = new URLSearchParams(location.search).get("p");
-  var dec = (p && codec) ? codec.decode(p) : null;
+  /* ---- 凭邀请码进:?p → {seed,durIdx};无 / 校验不过 = 非正常流程 → 回主页 ---- */
+  var q = new URLSearchParams(location.search);
+  var dec = window.FairPack ? FairPack.decodeSeed(q.get("p")) : null;
   if (!dec) { location.replace("../"); return; }
-  var seedParam = p, seedGrid = dec.grid;
 
-  /* ---- 确定性取流器:6×6 → 无限颜色流(每读 36 个换一次行列,配平保持)---- */
-  function makeStream(seed) {
-    var g = seed.slice(), seg = 0, idx = 0;
-    function swapRows(a, b) { for (var c = 0; c < 6; c++) { var i = a * 6 + c, j = b * 6 + c, t = g[i]; g[i] = g[j]; g[j] = t; } }
-    function swapCols(a, b) { for (var r = 0; r < 6; r++) { var i = r * 6 + a, j = r * 6 + b, t = g[i]; g[i] = g[j]; g[j] = t; } }
-    function permute(s) {
-      var a = s % 6, b = (s * 2 + 1) % 6; if (b === a) b = (b + 1) % 6;
-      var c = (s * 3 + 2) % 6, d = (s + 4) % 6; if (d === c) d = (d + 1) % 6;
-      swapRows(a, b); swapCols(c, d);
-    }
-    return function next() {
-      if (idx === 36) { seg++; permute(seg); idx = 0; }
-      return g[idx++];
-    };
+  /* ---- 按 ?g 在注册表(平铺 typed 树)查自己:board / durs → 尺寸与时长 ---- */
+  function findGameById(id) {
+    var g = window.GAMES || [];
+    for (var i = 0; i < g.length; i++) if (g[i].node_type === "game" && g[i].id === id) return g[i];
+    return null;
   }
-  var stream = makeStream(seedGrid);
+  var node = findGameById(parseInt(q.get("g"), 10));
+  var SIZE = (node && node.board) || 8;
+  var durs = (node && node.durs) || [30];
+  var DURATION = (durs[dec.durIdx] || durs[0]) * 1000;
+
+  /* ---- 确定性色流:PRNG 洗一袋(每色 COLORS 个)→ 发完再洗 = 无限均匀,跨端同流 ---- */
+  var rng = FairPack.rng(dec.seed);
+  function makeStream() {
+    var bag = [], idx = 0;
+    function refill() {
+      bag = [];
+      for (var v = 1; v <= COLORS; v++) for (var k = 0; k < COLORS; k++) bag.push(v);
+      rng.shuffle(bag); idx = 0;
+    }
+    refill();
+    return function next() { if (idx >= bag.length) refill(); return bag[idx++]; };
+  }
+  var stream = makeStream();
 
   /* ---- 棋盘 ---- */
   var board = new Array(SIZE * SIZE);
@@ -145,7 +150,7 @@
   function finish() {                    // 超时 → 结束:禁用按钮 + stage 级分享结果
     if (ended) return; ended = true;
     busy = true; selected = null; render();
-    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", gameName: (L.match3x86 && L.match3x86.name) || "", score: score });
+    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", gameName: (L.match3 && L.match3.name) || "", score: score });
   }
 
   function boot() {

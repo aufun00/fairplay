@@ -28,7 +28,7 @@
   <script src="games.js"></script>
   <script>
     /* ==================== 纯路由器(本页几乎不显示)====================
-       1) 邀请码 ?g=<id>&p=<param> → 在 window.GAMES 里按 id 找游戏,推路径跳游戏。
+       1) 邀请码 ?g=<id>&p=<code> → 在 window.GAMES(平铺 typed 树)按 id 找游戏,推路径跳游戏。
        2) 无 g / 找不到 → 按 op_mode 分流到 index.<mode>.html(default new)。
           op_mode 为字符串,以后加 homepage mode 只需再放一个 index.<mode>.html。
        兜底:任何异常都回引导页 index.new.html。 */
@@ -38,19 +38,13 @@
         var g = q.get("g");
         if (g && window.GAMES) {
           var id = +g, game = null;
-          window.GAMES.forEach(function (l1) {
-            l1.subs.forEach(function (l2) {
-              l2.games.forEach(function (gm) { if (gm.id === id) game = gm; });
-            });
-          });
+          window.GAMES.forEach(function (gm) { if (gm && gm.id === id) game = gm; });
           if (game) {
             /* 通过邀请码进游戏,也把该游戏计入本设备的 recent(收到分享链接来玩的人同样受益) */
             if (window.FairPlay && FairPlay.pushRecent) FairPlay.pushRecent(id);
-            var url = game.key + "/" + game.key + ".html";
-            if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+            var url = game.key + "/" + game.key + ".html?g=" + game.id;   // ?g 定游戏
             var p = q.get("p");
-            if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
-            url += (url.indexOf("?") >= 0 ? "&" : "?") + "g=" + id;   // 完整传递 id,结果页据此拼回邀请链接
+            if (p != null) url += "&p=" + encodeURIComponent(p);          // p 内含时长+seed
             location.replace(url);
             return;
           }

@@ -26,28 +26,21 @@
   <!-- 版本号(唯一来源)+ 通用编码模块 先加载 -->
   <script src="version.js"></script>
   <script src="pack.js"></script>
-  <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
+  <!-- 注册表先加载,路由器立即用(seed 编解码统一在 pack.js:FairPack.encodeSeed/decodeSeed) -->
   <script src="games.js"></script>
-  <script src="match3/match3.invcode.js"></script>
-  <script src="blockfit/blockfit.invcode.js"></script>
   <script>
-    /* ---- 路由器:邀请码 ?g=<id>&p=<param> → 在 window.GAMES 树里按 id 找游戏,
-       由 key 推路径(key/key.html)+ 拼 cfg + p → 跳游戏;无 g / 找不到 = 显示主页 ---- */
+    /* ---- 路由器:邀请码 ?g=<id>&p=<code> → 在 window.GAMES(平铺 typed 树)按 id 找游戏,
+       由 key 推路径(key/key.html)+ 透传 p(内含时长+seed)→ 跳游戏;无 g / 找不到 = 显示主页 ---- */
     (function () {
       var q = new URLSearchParams(location.search);
       var g = q.get("g");
       if (!g || !window.GAMES) return;
       var id = +g, game = null;
-      window.GAMES.forEach(function (l1) {
-        l1.subs.forEach(function (l2) {
-          l2.games.forEach(function (gm) { if (gm.id === id) game = gm; });
-        });
-      });
+      window.GAMES.forEach(function (gm) { if (gm && gm.id === id) game = gm; });
       if (!game) return;
-      var url = game.key + "/" + game.key + ".html";
-      if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+      var url = game.key + "/" + game.key + ".html?g=" + game.id;
       var p = q.get("p");
-      if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
+      if (p != null) url += "&p=" + encodeURIComponent(p);
       location.replace(url);
     })();
   </script>
@@ -147,50 +140,10 @@
     }
     #hm_recent .rec-item .ic{ width:1.4rem; height:1.4rem; }   /* = history icon */
 
-    /* games:Tab + 矩阵 */
-    .tabs{ display:flex; gap:.4rem; margin-bottom:.5rem; flex-wrap:wrap; }
-    .tabs button{
-      background:transparent; color:var(--fg); border:1px solid var(--line);
-      border-radius:.5rem; padding:.3rem .6rem; font:inherit; cursor:pointer;
-    }
-    .tabs button.on{ border-color:var(--accent); color:var(--accent); }
-    .tabs button:disabled{ opacity:.35; cursor:default; }   /* 空的 L1/L2 灰掉 */
-    .tabs button .ic{ width:1.25rem; height:1.25rem; display:block; }
-    .matrix{ display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
-    .matrix .game{
-      display:flex; align-items:center; gap:.5rem; text-align:left; min-width:0;
-      background:var(--bar-bg); color:var(--fg); border:1px solid var(--line);
-      border-radius:.5rem; padding:.6rem; font:inherit; cursor:pointer;
-      height:4.19rem;                 /* = history 卡 67px(box-sizing:border-box) */
-    }
-    .matrix .game .ic{ width:1.6rem; height:1.6rem; flex:0 0 auto; }
-    .matrix .game .ginfo{ display:flex; flex-direction:column; min-width:0; }
-    .matrix .game .gname{ font-size:.92rem; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .matrix .game .gd{ font-size:.76rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* games:游戏行竖列(每行 = 图标 + 名/说明 + 30/60 时长按钮;.grow/.dbtn 在 common.css) */
+    #hm_games .glist{ display:flex; flex-direction:column; gap:.5rem; }
   </style>
 
-  <!-- ==================== DEBUG ONLY ====================
-    调试用尺寸微调。URL 加 ?s=a,b,c(百分比,100=当前):
-      a = history button 缩放%   b = recent button 缩放%   c = games 按钮高度%
-    例:?s=150,120,130 。不带 s 或 DEBUG=false 时无任何影响。
-    【正式发布前:把 DEBUG 改 false,或直接删除本块】 -->
-  <script>
-    (function () {
-      var DEBUG = true;                 // ← 正式发布改 false(或删掉整块)
-      if (!DEBUG) return;
-      var s = new URLSearchParams(location.search).get("s");
-      if (!s) return;
-      var p = s.split(",").map(function (x) { return parseFloat(x); });
-      var a = p[0], b = p[1], c = p[2], css = "";
-      if (a > 0) css += "#hm_history .pi-item{ zoom:" + (a / 100) + " !important; }\n";
-      if (b > 0) css += "#hm_recent .rec-item{ zoom:" + (b / 100) + " !important; }\n";
-      if (c > 0) css += ".matrix .game{ height:" + (4.19 * c / 100).toFixed(3) + "rem !important; }\n";
-      if (!css) return;
-      var st = document.createElement("style"); st.id = "dbg_scale"; st.textContent = css;
-      document.head.appendChild(st);
-      console.log("[DEBUG] s=" + s + "  a(hist)=" + a + "% b(rec)=" + b + "% c(game-h)=" + c + "%");
-    })();
-  </script>
 </head>
 <body>
   <div id="app_frame">
@@ -225,18 +178,16 @@
         <div class="rec-row" id="hm_recent_row"></div>
       </section>
 
-      <!-- games:L1 时长标签 → L2 类型标签 → L3 游戏按钮(全由 window.GAMES 动态生成) -->
+      <!-- games:游戏行竖列(由 window.GAMES 平铺生成;每行含 30/60 时长按钮) -->
       <section id="hm_games" class="block">
-        <div class="tabs" id="hm_l1"></div>
-        <div class="tabs" id="hm_l2"></div>
-        <div class="matrix" id="hm_list"></div>
+        <div class="glist" id="hm_list"></div>
       </section>
     </main>
   </div>
 
   <!-- 主页语言包(含通用置顶栏文本) -->
   <script src="index.lang.js"></script>
-  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,dsp_dsc_idx 指向的键在里面) -->
+  <!-- 各游戏语言包(home 渲染名/说明用,i18n 键 = 注册表 key) -->
   <script src="match3/match3.lang.js"></script>
   <script src="blockfit/blockfit.lang.js"></script>
   <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
@@ -259,7 +210,6 @@
         getL: getL,
         base: location.origin + location.pathname.replace(/[^/]*$/, ""),   // 目录根,邀请链接命中路由器
         catalog: catalog,
-        codecs: window.FAIRPLAY_CODECS || {},
         onHistory: renderPickInv,
         onRecent: renderRecent,
         onRoundStarted: function () {},                                    // pro 一屏,无需切视图
@@ -285,7 +235,7 @@
           var g = H.findGame(item.gameId) || {};
           var card = document.createElement("button");
           card.className = "pi-item" + (item === H.selected ? " sel" : "") + (item === pendingDelete ? " confirm" : "");
-          var icon = document.createElement("div"); icon.className = "pi-icon"; icon.innerHTML = g.icon ? H.icoSvg(g.icon) : "🎮";
+          var icon = document.createElement("div"); icon.className = "pi-icon"; icon.innerHTML = g.icon ? H.icoSvg(g.icon, H.entryBadge(item)) : "🎮";
           var l1 = document.createElement("div"); l1.className = "pi-l1"; l1.textContent = item.param.slice(-4);
           var l2 = document.createElement("div"); l2.className = "pi-l2"; l2.textContent = H.entryLabel(item);
           var del = document.createElement("div"); del.className = "pi-del"; del.textContent = "🗑️";
@@ -304,120 +254,69 @@
         });
       }
 
-      /* ② recent:图标行 · rec-item + 越界裁剪;空则整块隐藏 */
+      /* ② recent:图标行 · 每个最近游戏按 durs 摊成带角标图标(3/6),点 = 开该档一局。
+         越界裁剪按「整局」(该游戏所有档一起)从尾部去。空则整块隐藏 */
+      function paintRecent(box) {
+        box.innerHTML = "";
+        H.recent.forEach(function (id) {
+          var g = H.findGame(id);
+          (g.durs || [0]).forEach(function (secs, di) {
+            var b = document.createElement("button"); b.className = "rec-item";
+            b.innerHTML = H.icoSvg(g.icon, secs ? Math.round(secs / 10) : null);
+            b.addEventListener("click", function () { H.startRound(g, di); });
+            box.appendChild(b);
+          });
+        });
+      }
       function renderRecent() {
         var sec = document.getElementById("hm_recent");
         var box = document.getElementById("hm_recent_row");
-        box.innerHTML = "";
         var before = H.recent.length;
         H.recent = H.recent.filter(function (id) { return H.findGame(id); });
         if (H.recent.length !== before) H.saveRecent();
-        if (!H.recent.length) { sec.hidden = true; return; }
+        if (!H.recent.length) { sec.hidden = true; box.innerHTML = ""; return; }
         sec.hidden = false;
-        H.recent.forEach(function (id) {
-          var g = H.findGame(id);
-          var b = document.createElement("button"); b.className = "rec-item";
-          b.innerHTML = H.icoSvg(g.icon);
-          b.addEventListener("click", function () { H.startRound(g); });
-          box.appendChild(b);
-        });
-        trimRecentToFit(box);
-      }
-      function trimRecentToFit(box) {
-        if (!box.clientWidth) return;                 // 未布局(如隐藏)时不裁,避免误删
-        var changed = false;
-        while (box.children.length > 1 && box.scrollWidth > box.clientWidth) {
-          box.removeChild(box.lastElementChild); H.recent.pop(); changed = true;
+        paintRecent(box);
+        if (box.clientWidth) {                          // 越界:整局从尾部裁,重画
+          var changed = false;
+          while (H.recent.length > 1 && box.scrollWidth > box.clientWidth) { H.recent.pop(); paintRecent(box); changed = true; }
+          if (changed) H.saveRecent();
         }
-        if (changed) H.saveRecent();
       }
 
-      /* ---- games:L1 时长 → L2 类型 → L3 游戏,由 window.GAMES 生成;没游戏的标签灰掉 ---- */
-      var curL1 = 0, curL2 = 0;
-      function tabButton(iconId, on, enabled, onClick) {
-        var b = document.createElement("button");
-        if (on) b.classList.add("on");
-        b.innerHTML = H.icoSvg(iconId);
-        if (!enabled) b.disabled = true; else b.addEventListener("click", onClick);
-        return b;
-      }
-      function renderL1() {
-        var box = document.getElementById("hm_l1"); box.innerHTML = "";
-        catalog.forEach(function (l1, i) {
-          box.appendChild(tabButton(l1.icon, i === curL1, H.l1Full(l1), function () {
-            curL1 = i; curL2 = H.firstL2(catalog[i]); saveTab(); renderL1(); renderL2(); renderList();
-          }));
+      /* 游戏行(同 new 页):图标 + 名/说明 + 30/60 时长按钮(点 = 开该档一局) */
+      function gameRow(game) {
+        var t = H.gameInfo(game);
+        var row = document.createElement("div"); row.className = "grow";
+        row.innerHTML = H.icoSvg(game.icon) +
+          '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>' +
+          '<span class="grow-durs"></span>';
+        row.querySelector(".gc-name").textContent = t.name || game.key;
+        row.querySelector(".gc-sub").textContent = t.desc || "";
+        var durs = row.querySelector(".grow-durs");
+        (game.durs || []).forEach(function (secs, di) {
+          var b = document.createElement("button"); b.type = "button"; b.className = "dbtn";
+          b.textContent = secs;
+          b.addEventListener("click", function () { H.startRound(game, di); });
+          durs.appendChild(b);
         });
+        return row;
       }
-      function renderL2() {
-        var box = document.getElementById("hm_l2"); box.innerHTML = "";
-        catalog[curL1].subs.forEach(function (l2, i) {
-          box.appendChild(tabButton(l2.icon, i === curL2, H.l2Full(l2), function () {
-            curL2 = i; saveTab(); renderL2(); renderList();
-          }));
-        });
-      }
-      function renderList() {
+
+      /* ---- games:平铺 typed 树 → 全部游戏行竖列 ---- */
+      function renderGamesList() {
         var box = document.getElementById("hm_list"); box.innerHTML = "";
-        var subs = catalog[curL1].subs;
-        var list = (curL2 >= 0 && subs[curL2]) ? subs[curL2].games : [];
-        list.forEach(function (game) {
-          var t = L[game.dsp_dsc_idx] || {};
-          var b = document.createElement("button"); b.className = "game";
-          b.innerHTML = H.icoSvg(game.icon) +
-            '<span class="ginfo"><span class="gname"></span><span class="gd"></span></span>';
-          b.querySelector(".gname").textContent = t.name || game.key;
-          b.querySelector(".gd").textContent = t.desc || "";
-          b.addEventListener("click", function () { H.startRound(game); });
-          box.appendChild(b);
-        });
-      }
-      /* 记忆选择:存 {sig,l1key,l2key};games.js 改了(结构签名变)则恢复失败 → 回默认 */
-      function catSig() {
-        return catalog.map(function (l1) {
-          return l1.key + ":" + l1.subs.map(function (l2) {
-            return l2.key + "(" + l2.games.map(function (g) { return g.id; }).join(",") + ")";
-          }).join("|");
-        }).join(";");
-      }
-      function saveTab() {
-        try {
-          var l2 = catalog[curL1] && catalog[curL1].subs[curL2];
-          localStorage.setItem("fairplay.tab", JSON.stringify({ sig: catSig(), l1: catalog[curL1].key, l2: l2 ? l2.key : "" }));
-        } catch (e) {}
-      }
-      function restoreTab() {
-        try {
-          var s = JSON.parse(localStorage.getItem("fairplay.tab"));
-          if (!s || s.sig !== catSig()) return false;   // games.js 改过 → 不恢复
-          for (var i = 0; i < catalog.length; i++) {
-            if (catalog[i].key === s.l1 && H.l1Full(catalog[i])) {
-              for (var j = 0; j < catalog[i].subs.length; j++) {
-                if (catalog[i].subs[j].key === s.l2 && H.l2Full(catalog[i].subs[j])) { curL1 = i; curL2 = j; return true; }
-              }
-            }
-          }
-        } catch (e) {}
-        return false;
-      }
-      function renderGames() {
-        if (!catalog.length) return;
-        if (!restoreTab()) {                              // 无记忆 / 失效 / catalog 变 → 默认
-          curL1 = 0;
-          for (var i = 0; i < catalog.length; i++) if (H.l1Full(catalog[i])) { curL1 = i; break; }
-          curL2 = H.firstL2(catalog[curL1]);
-        }
-        renderL1(); renderL2(); renderList();
+        H.allGames().forEach(function (game) { box.appendChild(gameRow(game)); });
       }
 
-      /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(矩阵游戏说明、邀请条) */
+      /* 语言就地切换:更新 L 引用 + 重渲染按 L 动态生成的部分(游戏行、邀请条) */
       window.addEventListener("fairplay:langchange", function () {
         L = getL();
-        renderGames();
+        renderGamesList();
         renderPickInv();
       });
 
-      renderGames();
+      renderGamesList();
       renderPickInv();
       renderRecent();
       H.syncSquares();

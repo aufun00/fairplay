@@ -38,25 +38,39 @@ window.FairPlay.Home = function (cfg) {
     lastLongPress: 0    // 最近一次长按触发时刻(吞掉长按松手的那次 click;QR 与 pro 的 history 长按共用)
   };
 
-  /* ---- 目录辅助 ---- */
-  function icoSvg(id) { return '<svg class="ic" aria-hidden="true"><use href="#ic_' + id + '"/></svg>'; }
-  function l2Full(l2) { return l2.games && l2.games.length > 0; }
-  function l1Full(l1) { return l1.subs.some(l2Full); }
-  function firstL2(l1) { for (var i = 0; i < l1.subs.length; i++) if (l2Full(l1.subs[i])) return i; return -1; }
+  /* ---- 目录辅助(通用 typed 树:dir 可下钻 / game 叶子;当前全挂根 = 平铺)---- */
+  function icoSvg(id, badge) {
+    var svg = '<svg class="ic" aria-hidden="true"><use href="#ic_' + id + '"/></svg>';
+    if (badge == null || badge === "") return svg;
+    return '<span class="ic-wrap">' + svg + '<span class="ic-badge">' + badge + '</span></span>';
+  }
+  function isGame(node) { return !!(node && (node.node_type === "game" || node.id != null)); }
+  function childrenOf(node) { return node ? (node.children || node.subs || node.games || []) : catalog; }
+  /* 递归收集全部 game 叶子(供扁平渲染 / 按 id 查找)*/
+  function collectGames(nodes, out) {
+    out = out || [];
+    (nodes || catalog).forEach(function (n) {
+      if (isGame(n)) out.push(n);
+      else childrenOf(n).forEach(function (c) { collectGames([c], out); });
+    });
+    return out;
+  }
+  function allGames() { return collectGames(catalog, []); }
   function findGame(id) {
-    for (var i = 0; i < catalog.length; i++)
-      for (var j = 0; j < catalog[i].subs.length; j++) {
-        var gs = catalog[i].subs[j].games;
-        for (var k = 0; k < gs.length; k++) if (gs[k].id === id) return gs[k];
-      }
+    var gs = allGames();
+    for (var i = 0; i < gs.length; i++) if (gs[i].id === id) return gs[i];
     return null;
   }
-  function gamePlayUrl(game) {
-    var url = game.key + "/" + game.key + ".html";
-    if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
-    url += (url.indexOf("?") >= 0 ? "&" : "?") + "g=" + game.id;   // 完整传递 id(结果页据此拼回邀请链接)
-    return url;
+  function gameInfo(game) { return (game && getL()[game.key]) || {}; }
+  /* 邀请码解出的时长角标(一位数 = dur/10:30→3、60→6);解不出(老格式)→ null */
+  function entryBadge(item) {
+    if (!(window.FairPack && item)) return null;
+    var d = FairPack.decodeSeed(item.param), g = findGame(item.gameId);
+    if (!d || !g || !g.durs) return null;
+    var secs = g.durs[d.durIdx];
+    return secs ? Math.round(secs / 10) : null;
   }
+  function gamePlayUrl(game) { return game.key + "/" + game.key + ".html?g=" + game.id; }
   function inviteLink(item) { return base + "?g=" + item.gameId + "&p=" + encodeURIComponent(item.param); }
 
   /* ---- 条目展示辅助 ---- */
@@ -146,10 +160,9 @@ window.FairPlay.Home = function (cfg) {
     H.recent = loadRecent();
     onRecent();
   }
-  /* 开一局:codec.encode(cfg 空则不传)→ history 最前插一条 → 选中显 QR → 记入 recent */
-  function startRound(game) {
-    var codec = codecs[game.key];
-    var param = codec ? (game.cfg ? codec.encode(game.cfg) : codec.encode()) : String(Date.now());
+  /* 开一局(durIdx=选的时长档)→ FairPack.encodeSeed 掷码(内含 durIdx+seed)→ history 最前插一条 → 选中显 QR → 记入 recent */
+  function startRound(game, durIdx) {
+    var param = window.FairPack ? FairPack.encodeSeed(durIdx || 0) : String(Date.now());
     H.history.unshift({ gameId: game.id, param: param, memo: "", ts: Date.now() });
     saveHistory();
     selectEntry(H.history[0]);
@@ -210,7 +223,7 @@ window.FairPlay.Home = function (cfg) {
       if (!H.selected) { alert(L.share_empty || "Pick or create an invite first"); return; }
       var nick = FairPlay.getNickname();
       var g = findGame(H.selected.gameId) || {};
-      var gname = (g.dsp_dsc_idx && L[g.dsp_dsc_idx] && L[g.dsp_dsc_idx].name) || g.key || "";
+      var gname = (L[g.key] && L[g.key].name) || g.key || "";
       var line = (L.share_msg || "{nick} invites you to play {game} # {code}")
         .replace("{nick}", nick).replace("{game}", gname).replace("{code}", H.selected.param.slice(-4));
       FairPlay.share(line, inviteLink(H.selected));
@@ -219,11 +232,13 @@ window.FairPlay.Home = function (cfg) {
 
   /* ---- 暴露给页面 ---- */
   H.findGame = findGame;
+  H.allGames = allGames;
+  H.gameInfo = gameInfo;
+  H.entryBadge = entryBadge;
+  H.isGame = isGame;
+  H.childrenOf = childrenOf;
   H.gamePlayUrl = gamePlayUrl;
   H.icoSvg = icoSvg;
-  H.l1Full = l1Full;
-  H.l2Full = l2Full;
-  H.firstL2 = firstL2;
   H.inviteLink = inviteLink;
   H.entryTime = entryTime;
   H.entryLabel = entryLabel;

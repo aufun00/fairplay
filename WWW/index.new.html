@@ -26,28 +26,21 @@
   <!-- 版本号(唯一来源)+ 通用编码模块 先加载 -->
   <script src="version.js"></script>
   <script src="pack.js"></script>
-  <!-- 注册表先加载,路由器立即用;各游戏邀请码编解码 -->
+  <!-- 注册表先加载,路由器立即用(seed 编解码统一在 pack.js:FairPack.encodeSeed/decodeSeed) -->
   <script src="games.js"></script>
-  <script src="match3/match3.invcode.js"></script>
-  <script src="blockfit/blockfit.invcode.js"></script>
   <script>
-    /* ---- 路由器:邀请码 ?g=<id>&p=<param> → 在 window.GAMES 树里按 id 找游戏,
-       由 key 推路径(key/key.html)+ 拼 cfg + p → 跳游戏;无 g / 找不到 = 显示主页 ---- */
+    /* ---- 路由器:邀请码 ?g=<id>&p=<code> → 在 window.GAMES(平铺 typed 树)按 id 找游戏,
+       由 key 推路径(key/key.html)+ 透传 p(内含时长+seed)→ 跳游戏;无 g / 找不到 = 显示主页 ---- */
     (function () {
       var q = new URLSearchParams(location.search);
       var g = q.get("g");
       if (!g || !window.GAMES) return;
       var id = +g, game = null;
-      window.GAMES.forEach(function (l1) {
-        l1.subs.forEach(function (l2) {
-          l2.games.forEach(function (gm) { if (gm.id === id) game = gm; });
-        });
-      });
+      window.GAMES.forEach(function (gm) { if (gm && gm.id === id) game = gm; });
       if (!game) return;
-      var url = game.key + "/" + game.key + ".html";
-      if (game.cfg) url += "?c=" + encodeURIComponent(game.cfg);
+      var url = game.key + "/" + game.key + ".html?g=" + game.id;
       var p = q.get("p");
-      if (p != null) url += (url.indexOf("?") >= 0 ? "&" : "?") + "p=" + encodeURIComponent(p);
+      if (p != null) url += "&p=" + encodeURIComponent(p);
       location.replace(url);
     })();
   </script>
@@ -156,28 +149,6 @@
     #hm_recent .rec-empty{ color:var(--muted); font-size:.8rem; }
   </style>
 
-  <!-- ==================== DEBUG ONLY ====================
-    调试用尺寸微调。URL 加 ?s=a,b,c(百分比,100=当前):
-      a = history button 缩放%   b = recent button 缩放%   c = games 按钮高度%
-    例:?s=150,120,130 。不带 s 或 DEBUG=false 时无任何影响。
-    【正式发布前:把 DEBUG 改 false,或直接删除本块】 -->
-  <script>
-    (function () {
-      var DEBUG = true;                 // ← 正式发布改 false(或删掉整块)
-      if (!DEBUG) return;
-      var s = new URLSearchParams(location.search).get("s");
-      if (!s) return;
-      var p = s.split(",").map(function (x) { return parseFloat(x); });
-      var a = p[0], b = p[1], c = p[2], css = "";
-      if (a > 0) css += "#hm_history .gcard{ zoom:" + (a / 100) + " !important; }\n";
-      if (b > 0) css += "#hm_recent .gcard{ zoom:" + (b / 100) + " !important; }\n";
-      if (c > 0) css += ".matrix .game{ height:" + (4.19 * c / 100).toFixed(3) + "rem !important; }\n";
-      if (!css) return;
-      var st = document.createElement("style"); st.id = "dbg_scale"; st.textContent = css;
-      document.head.appendChild(st);
-      console.log("[DEBUG] s=" + s + "  a(hist)=" + a + "% b(rec)=" + b + "% c(game-h)=" + c + "%");
-    })();
-  </script>
 </head>
 <body>
   <div id="app_frame">
@@ -234,7 +205,7 @@
 
   <!-- 主页语言包(含通用置顶栏文本) -->
   <script src="index.lang.js"></script>
-  <!-- 各游戏语言包(home 渲染 L3 的 名/说明 用,dsp_dsc_idx 指向的键在里面) -->
+  <!-- 各游戏语言包(home 渲染名/说明用,i18n 键 = 注册表 key) -->
   <script src="match3/match3.lang.js"></script>
   <script src="blockfit/blockfit.lang.js"></script>
   <!-- 置顶栏内容注入(在 applyI18n 翻译之前) -->
@@ -256,7 +227,6 @@
         getL: getL,
         base: location.origin + location.pathname.replace(/[^/]*$/, ""),   // 目录根,邀请链接命中路由器
         catalog: catalog,
-        codecs: window.FAIRPLAY_CODECS || {},
         onHistory: renderPickInv,
         onRecent: renderRecent,
         onRoundStarted: function () { showView("invite"); },               // 开完一局跳①
@@ -267,7 +237,26 @@
       });
       H.initInvite();
 
-      /* ① history:统一宽按钮 .gcard(左大图标 + 名#码 / memo + 右删除按钮) */
+      /* 游戏行(games 浏览 / recent 共用):左图标 + 名/说明 + 右时长按钮(30/60,点 = 开该档一局) */
+      function gameRow(game) {
+        var t = H.gameInfo(game);
+        var row = document.createElement("div"); row.className = "grow";
+        row.innerHTML = H.icoSvg(game.icon) +
+          '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>' +
+          '<span class="grow-durs"></span>';
+        row.querySelector(".gc-name").textContent = t.name || game.key;
+        row.querySelector(".gc-sub").textContent = t.desc || "";
+        var durs = row.querySelector(".grow-durs");
+        (game.durs || []).forEach(function (secs, di) {
+          var b = document.createElement("button"); b.type = "button"; b.className = "dbtn";
+          b.textContent = secs;
+          b.addEventListener("click", function () { H.startRound(game, di); });
+          durs.appendChild(b);
+        });
+        return row;
+      }
+
+      /* ① history:统一宽按钮 .gcard(左大图标+时长角标 · 名#码 / memo · 右删除按钮) */
       function renderPickInv() {
         var box = document.getElementById("hm_history");
         box.innerHTML = "";
@@ -277,12 +266,11 @@
         }
         H.history.forEach(function (item, idx) {
           var g = H.findGame(item.gameId) || {};
-          var t = (g.dsp_dsc_idx && L[g.dsp_dsc_idx]) || {};
-          var name = t.name || g.key || "";
+          var name = H.gameInfo(g).name || g.key || "";
           var card = document.createElement("div");   // div:内部才能合法嵌套删除 button
           card.className = "gcard" + (item === H.selected ? " sel" : "");
           card.innerHTML =
-            (g.icon ? H.icoSvg(g.icon) : "🎮") +
+            (g.icon ? H.icoSvg(g.icon, H.entryBadge(item)) : "🎮") +
             '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>' +
             '<button type="button" class="gc-del" aria-label="Delete">🗑️</button>';
           card.querySelector(".gc-name").textContent = name + " # " + item.param.slice(-4);
@@ -293,7 +281,7 @@
         });
       }
 
-      /* ② recent:同 .gcard(名 + desc);点 = 再发一局 */
+      /* ② recent:游戏行(名 + 说明 + 30/60);点时长按钮 = 开该档一局 */
       function renderRecent() {
         var box = document.getElementById("hm_recent_row");
         box.innerHTML = "";
@@ -304,16 +292,7 @@
           var e = document.createElement("div"); e.className = "rec-empty";
           e.textContent = L.recent_empty || "No recent games"; box.appendChild(e); return;
         }
-        H.recent.forEach(function (id) {
-          var g = H.findGame(id);
-          var t = L[g.dsp_dsc_idx] || {};
-          var b = document.createElement("button"); b.className = "gcard";
-          b.innerHTML = H.icoSvg(g.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
-          b.querySelector(".gc-name").textContent = t.name || g.key;
-          b.querySelector(".gc-sub").textContent = t.desc || "";
-          b.addEventListener("click", function () { H.startRound(g); });
-          box.appendChild(b);
-        });
+        H.recent.forEach(function (id) { box.appendChild(gameRow(H.findGame(id))); });
       }
 
       /* 分类文案(L.cat[key] = {name, desc});缺则回退 key */
@@ -339,13 +318,14 @@
         } else if (name === "recent") {
           renderRecent();
         } else if (name === "browse") {
-          bL1 = null; bL2 = null;                                             // 进入 = 回 L1
+          browseStack = [];                                                   // 进入 = 回根
           renderBrowse();
         }
       }
 
-      /* ---- ③ browse:面包屑逐级下钻(L1 时长 → L2 类型 → 游戏)---- */
-      var bL1 = null, bL2 = null;
+      /* ---- ③ browse:通用 typed 下钻。dir 节点 → 面包屑下钻;game 叶子 → 游戏行(30/60)。
+         当前全挂根(平铺)→ 直接列出所有游戏行,无中间层 ---- */
+      var browseStack = [];   // 当前 dir 路径(空 = 根)
       function crumbChip(label, onClick) {
         var b = document.createElement("button"); b.className = "bc-chip";
         b.textContent = label; b.addEventListener("click", onClick);
@@ -354,42 +334,23 @@
       function renderBrowse() {
         var box = document.getElementById("hm_browse"); box.innerHTML = "";
         var crumbs = document.createElement("div"); crumbs.className = "bc-crumbs";
-        crumbs.appendChild(crumbChip(L.onb_list || "Games list", function () { bL1 = null; bL2 = null; renderBrowse(); }));
-        if (bL1 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1]).name || catalog[bL1].key, function () { bL2 = null; renderBrowse(); }));
-        if (bL2 != null) crumbs.appendChild(crumbChip(catInfo(catalog[bL1].subs[bL2]).name || catalog[bL1].subs[bL2].key, function () { renderBrowse(); }));
+        crumbs.appendChild(crumbChip(L.onb_list || "Games list", function () { browseStack = []; renderBrowse(); }));
+        browseStack.forEach(function (n, i) {
+          crumbs.appendChild(crumbChip(catInfo(n).name || n.key, function () { browseStack = browseStack.slice(0, i + 1); renderBrowse(); }));
+        });
         box.appendChild(crumbs);
         box.appendChild(document.createElement("hr"));
         var opts = document.createElement("div"); opts.className = "bc-opts";
         box.appendChild(opts);
 
-        if (bL2 != null) {                                  // 最深层 = 游戏列表
-          catalog[bL1].subs[bL2].games.forEach(function (game) {
-            var t = L[game.dsp_dsc_idx] || {};
-            var b = document.createElement("button"); b.className = "gcard";
-            b.innerHTML = H.icoSvg(game.icon) + '<span class="gc-info"><span class="gc-name"></span><span class="gc-sub"></span></span>';
-            b.querySelector(".gc-name").textContent = t.name || game.key;
-            b.querySelector(".gc-sub").textContent = t.desc || "";
-            b.addEventListener("click", function () { H.startRound(game); });
-            opts.appendChild(b);
-          });
-        } else if (bL1 != null) {                           // L2 类型(只显有游戏的)
-          catalog[bL1].subs.forEach(function (l2, j) {
-            if (!H.l2Full(l2)) return;
-            var b = document.createElement("button"); b.className = "opt";
-            b.textContent = catInfo(l2).name || l2.key;
-            b.addEventListener("click", function () { bL2 = j; renderBrowse(); });
-            opts.appendChild(b);
-          });
-        } else {                                            // L1 时长(只显有游戏的),显 desc
-          catalog.forEach(function (l1, i) {
-            if (!H.l1Full(l1)) return;
-            var c = catInfo(l1);
-            var b = document.createElement("button"); b.className = "opt";
-            b.textContent = c.desc || c.name || l1.key;
-            b.addEventListener("click", function () { bL1 = i; bL2 = null; renderBrowse(); });
-            opts.appendChild(b);
-          });
-        }
+        var cur = browseStack.length ? browseStack[browseStack.length - 1] : null;
+        H.childrenOf(cur).forEach(function (n) {
+          if (H.isGame(n)) { opts.appendChild(gameRow(n)); return; }          // game 叶子 → 游戏行
+          var b = document.createElement("button"); b.className = "opt";      // dir → 下钻
+          b.textContent = catInfo(n).name || n.key;
+          b.addEventListener("click", function () { browseStack.push(n); renderBrowse(); });
+          opts.appendChild(b);
+        });
       }
 
       /* L0 三按钮 → 三条路 */

@@ -87,21 +87,10 @@
         '<path d="M5 2v4M7 2v4M9 2v4"/><path d="M5 6h4"/><path d="M7 6v16"/>' +   // 叉子:三齿 + 齿根 + 柄
         '<path d="M16 2c3 2 3 9 0 11"/><path d="M16 13v9"/>' +                     // 刀:弯刃 + 柄
       '</symbol>' +
-      /* blockfit 三档:Γ 形 5 格块(上排 3 + 左列 3,共用左上角)+ 右下缺口角标时间 30/90/∞ */
-      '<symbol id="ic_blockfit30" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+      /* blockfit:Γ 形 5 格块(上排 3 + 左列 3,共用左上角);右下角刻意留空,给时长角标腾位 */
+      '<symbol id="ic_blockfit" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
         '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
         '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
-        '<text x="16" y="20.6" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="800">30</text>' +
-      '</symbol>' +
-      '<symbol id="ic_blockfit90" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
-        '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
-        '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
-        '<text x="16" y="20.6" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="800">90</text>' +
-      '</symbol>' +
-      '<symbol id="ic_blockfitinf" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
-        '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
-        '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
-        '<text x="16" y="21" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="800">∞</text>' +
       '</symbol>' +
     '</svg>';
 

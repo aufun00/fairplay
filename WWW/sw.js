@@ -27,11 +27,9 @@ const SHELL = [
   "./apple-touch-icon.png",
   "./match3/match3.html",
   "./match3/match3.lang.js",
-  "./match3/match3.invcode.js",
   "./match3/match3.js",
   "./blockfit/blockfit.html",
   "./blockfit/blockfit.lang.js",
-  "./blockfit/blockfit.invcode.js",
   "./blockfit/blockfit.js"
 ];
 

@@ -4,11 +4,11 @@ window.I18N = window.I18N || {};
 window.I18N.en = Object.assign(window.I18N.en || {}, {
   m3_timeup: "Time's up!",
   m3_rules: "Swap two adjacent dishes to line up 3 or more of a kind — they clear and score. Longer chains score more. Clear as much as you can before the timer runs out.",
-  /* 目录条目(dsp_dsc_idx 指向此):home 渲染 L3 用。dsp(name)= 显示名唯一来源 */
-  match3x86: { name: "Dish Duty", desc: "Clear the board" }
+  /* 目录条目(i18n 键 = 注册表 key):home 渲染用。name = 显示名唯一来源;时长由按钮/角标表达,不进文案 */
+  match3: { name: "Dish Duty", desc: "Clear the board" }
 });
 window.I18N.zh = Object.assign(window.I18N.zh || {}, {
   m3_timeup: "时间到!",
   m3_rules: "交换相邻的两个碗碟,凑成 3 个及以上同款即可消除得分;连锁越长分越高。在时间用完前尽量多消。",
-  match3x86: { name: "今天谁洗碗", desc: "清空棋盘" }
+  match3: { name: "今天谁洗碗", desc: "清空棋盘" }
 });
