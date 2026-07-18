@@ -176,11 +176,12 @@ body{
    角标尺寸跟随图标:.ic-wrap 的 font-size = 图标边长(下方各处按图标大小设),角标全用 em → 等比缩放 */
 .ic-wrap{ position:relative; display:inline-flex; flex:0 0 auto; font-size:2.2rem; }   /* 默认 = .grow/.gcard 图标 2.2rem */
 .ic-badge{
-  position:absolute; right:-.1em; bottom:-.1em;
-  min-width:.5em; height:.5em; padding:0 .1em;
+  /* font-size 相对 .ic-wrap(图标边长)→ 随图标缩放;下面盒尺寸/偏移相对本元素字号(em)→ 恒容得下数字 */
+  position:absolute; right:-.35em; bottom:-.35em;
+  min-width:1.35em; height:1.35em; padding:0 .12em;
   display:flex; align-items:center; justify-content:center;
   font-size:.4em; font-weight:800; line-height:1;
-  background:var(--accent); color:#fff; border-radius:.5em;
+  background:var(--accent); color:#fff; border-radius:50%;
   font-variant-numeric:tabular-nums;
 }
 /* 游戏行:左图标 + 中(名/说明)+ 右时长按钮(30/60)。games 列表与 new 的 recent 共用 */
