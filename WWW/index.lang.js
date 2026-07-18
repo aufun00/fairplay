@@ -68,8 +68,6 @@ window.I18N.en = Object.assign(window.I18N.en || {}, {
 
   /* 主页 · 游戏说明(键名 = 注册表 descKey) */
   game_match3_desc: "Match-3 · clear the board",
-  game_mathdoku_desc: "MathDoku · logic grid",
-  game_memory_desc: "Memory · match the pairs",
 });
 
 window.I18N.zh = Object.assign(window.I18N.zh || {}, {
@@ -139,6 +137,4 @@ window.I18N.zh = Object.assign(window.I18N.zh || {}, {
 
   /* 主页 · 游戏说明 */
   game_match3_desc: "三消 · 清空棋盘",
-  game_mathdoku_desc: "MathDoku · 逻辑方格",
-  game_memory_desc: "记忆 · 配对翻牌",
 });
