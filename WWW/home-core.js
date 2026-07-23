@@ -44,23 +44,12 @@ window.FairPlay.Home = function (cfg) {
     if (badge == null || badge === "") return svg;
     return '<span class="ic-wrap">' + svg + '<span class="ic-badge">' + badge + '</span></span>';
   }
-  function isGame(node) { return !!(node && (node.node_type === "game" || node.id != null)); }
-  function childrenOf(node) { return node ? (node.children || node.subs || node.games || []) : catalog; }
-  /* 递归收集全部 game 叶子(供扁平渲染 / 按 id 查找)*/
-  function collectGames(nodes, out) {
-    out = out || [];
-    (nodes || catalog).forEach(function (n) {
-      if (isGame(n)) out.push(n);
-      else childrenOf(n).forEach(function (c) { collectGames([c], out); });
-    });
-    return out;
-  }
-  function allGames() { return collectGames(catalog, []); }
-  function findGame(id) {
-    var gs = allGames();
-    for (var i = 0; i < gs.length; i++) if (gs[i].id === id) return gs[i];
-    return null;
-  }
+  /* typed 树查询统一在 FairCatalog(games.js);本页只按自己的 catalog(= cfg.catalog)代入 */
+  function isGame(node) { return FairCatalog.isGame(node); }
+  function childrenOf(node) { return node ? FairCatalog.childrenOf(node) : catalog; }
+  function collectGames(nodes, out) { return FairCatalog.collect(nodes || catalog, out); }
+  function allGames() { return FairCatalog.collect(catalog, []); }
+  function findGame(id) { return FairCatalog.find(id, catalog); }
   function gameInfo(game) { return (game && getL()[game.key]) || {}; }
   /* 邀请码解出的时长角标(一位数 = dur/10:30→3、60→6);解不出(老格式)→ null */
   function entryBadge(item) {

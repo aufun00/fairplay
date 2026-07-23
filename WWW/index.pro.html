@@ -29,14 +29,13 @@
   <!-- 注册表先加载,路由器立即用(seed 编解码统一在 pack.js:FairPack.encodeSeed/decodeSeed) -->
   <script src="games.js"></script>
   <script>
-    /* ---- 路由器:邀请码 ?g=<id>&p=<code> → 在 window.GAMES(平铺 typed 树)按 id 找游戏,
+    /* ---- 路由器:邀请码 ?g=<id>&p=<code> → 用 FairCatalog.find 在 typed 树按 id 找游戏,
        由 key 推路径(key/key.html)+ 透传 p(内含时长+seed)→ 跳游戏;无 g / 找不到 = 显示主页 ---- */
     (function () {
       var q = new URLSearchParams(location.search);
       var g = q.get("g");
-      if (!g || !window.GAMES) return;
-      var id = +g, game = null;
-      window.GAMES.forEach(function (gm) { if (gm && gm.id === id) game = gm; });
+      if (!g || !window.FairCatalog) return;
+      var game = FairCatalog.find(+g);
       if (!game) return;
       var url = game.key + "/" + game.key + ".html?g=" + game.id;
       var p = q.get("p");

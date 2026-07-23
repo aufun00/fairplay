@@ -63,7 +63,9 @@ self.addEventListener("fetch", (e) => {
           caches.open(VERSION).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
+        // 离线兜底:ignoreSearch 让带 ?g/?p 的导航命中干净路径缓存(如 match3/match3.html),
+        // 否则带 query 必 miss、一律回退 index.html → 路由器再跳 → 相对路径越套越深 = 死循环
+        .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match("./index.html")))
     );
   } else {
     // 静态资源:cache-first

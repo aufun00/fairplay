@@ -28,7 +28,7 @@
   <script src="games.js"></script>
   <script>
     /* ==================== 纯路由器(本页几乎不显示)====================
-       1) 邀请码 ?g=<id>&p=<code> → 在 window.GAMES(平铺 typed 树)按 id 找游戏,推路径跳游戏。
+       1) 邀请码 ?g=<id>&p=<code> → 用 FairCatalog.find 在 typed 树按 id 找游戏,推路径跳游戏。
        2) 无 g / 找不到 → 按 op_mode 分流到 index.<mode>.html(default new)。
           op_mode 为字符串,以后加 homepage mode 只需再放一个 index.<mode>.html。
        兜底:任何异常都回引导页 index.new.html。 */
@@ -36,9 +36,8 @@
       try {
         var q = new URLSearchParams(location.search);
         var g = q.get("g");
-        if (g && window.GAMES) {
-          var id = +g, game = null;
-          window.GAMES.forEach(function (gm) { if (gm && gm.id === id) game = gm; });
+        if (g && window.FairCatalog) {
+          var id = +g, game = FairCatalog.find(id);
           if (game) {
             /* 通过邀请码进游戏,也把该游戏计入本设备的 recent(收到分享链接来玩的人同样受益) */
             if (window.FairPlay && FairPlay.pushRecent) FairPlay.pushRecent(id);

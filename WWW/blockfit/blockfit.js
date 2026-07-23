@@ -6,16 +6,11 @@
 (function () {
   /* ---- 凭邀请码进:?p → {seed,durIdx};无 / 校验不过 → 回主页 ---- */
   var q = new URLSearchParams(location.search);
-  var dec = window.FairPack ? FairPack.decodeSeed(q.get("p")) : null;
-  if (!dec) { location.replace("../"); return; }
+  var dec = FairPlay.requireSeed(q.get("p"));
+  if (!dec) return;
 
-  /* ---- 按 ?g 在注册表(平铺 typed 树)查自己:board / durs → 尺寸与时长 ---- */
-  function findGameById(id) {
-    var g = window.GAMES || [];
-    for (var i = 0; i < g.length; i++) if (g[i].node_type === "game" && g[i].id === id) return g[i];
-    return null;
-  }
-  var node = findGameById(parseInt(q.get("g"), 10));
+  /* ---- 按 ?g 在注册表查自己:board / durs → 尺寸与时长 ---- */
+  var node = FairCatalog.find(parseInt(q.get("g"), 10));
   var BOARD = (node && node.board) || 8;
   var durs = (node && node.durs) || [30];
   var LIMIT = durs[dec.durIdx] || durs[0];              // 秒(30/60,均限时)

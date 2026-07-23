@@ -91,6 +91,15 @@ window.FairPlay.pushHistory = function (entry) {
   } catch (e) {}
 };
 
+/* 游戏页入口守卫:凭邀请码进——解 ?p 的 seed 载荷(FairPack.decodeSeed)。
+   非法/缺失 = 非正常流程,回上一级主页(homeUrl 默认 "../")并返回 null;
+   调用方:var dec = FairPlay.requireSeed(q.get("p")); if (!dec) return;  → 拿 {seed,durIdx}。 */
+window.FairPlay.requireSeed = function (param, homeUrl) {
+  var dec = window.FairPack ? FairPack.decodeSeed(param) : null;
+  if (!dec) { location.replace(homeUrl || "../"); return null; }
+  return dec;
+};
+
 /* 通用弹窗原语:造 .fp-overlay 背板 + .fp-card 卡片,调用方用 build(card, close) 填内容。
    opts: { dismissible=true(点背板关闭), cardClass, build, html,
            mount:element|selector —— 挂载点决定覆盖范围:默认 #app_frame=全窗(topbar 域);
