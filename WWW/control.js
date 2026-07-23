@@ -23,7 +23,7 @@
           '<svg class="ic" aria-hidden="true"><use href="#ic_play"/></svg>' +
         '</button>' +
         '<div id="app_ctl_score" class="ctl-num">0</div>' +
-        '<div class="ctl-vs"><div class="ctl-vs-fill"></div></div>' +
+        '<div class="ctl-vs"><div class="ctl-vs-fill"></div><i class="ctl-vs-spark"></i></div>' +
         '<div id="app_ctl_opp" class="ctl-num">0</div>';
     }
     var runBtn = document.getElementById("app_ctl_run");
@@ -31,7 +31,9 @@
     var timeEl = document.getElementById("app_ctl_time");
     var scoreEl = document.getElementById("app_ctl_score");
     var oppEl = document.getElementById("app_ctl_opp");
+    var vsBar = bar ? bar.querySelector(".ctl-vs") : null;
     var vsFill = bar ? bar.querySelector(".ctl-vs-fill") : null;
+    var vsSpark = bar ? bar.querySelector(".ctl-vs-spark") : null;
 
     /* 对抗:myScore 由游戏经 setScore 写;对手最终分从 ?o= 读一次(缺失=0),匀速爬升由时钟算 */
     var myScore = 0;
@@ -60,12 +62,15 @@
       var f = elapsed() / timer.duration; if (f < 0) f = 0; if (f > 1) f = 1;
       return Math.round(oppFinal * f);
     }
-    /* 画我/对手成绩框 + 拔河中线(fill 宽 = 我方份额 my/(my+对手现值);双 0 → 居中 50%) */
+    /* 画我/对手成绩框 + 战线(我方占比 my/(my+对手现值);双 0 → 居中 50%)+ 战线处爆闪跟随 */
     function paintVersus() {
       var opp = oppNow();
       if (scoreEl) scoreEl.textContent = myScore;
       if (oppEl) oppEl.textContent = opp;
-      if (vsFill) { var total = myScore + opp; vsFill.style.width = (total > 0 ? (myScore / total * 100) : 50) + "%"; }
+      var total = myScore + opp, pct = total > 0 ? (myScore / total * 100) : 50;
+      if (vsFill) vsFill.style.width = pct + "%";
+      if (vsSpark) vsSpark.style.left = pct + "%";
+      if (vsBar) vsBar.classList.toggle("behind", myScore < opp);   // 落后 → 领先/落后色两侧互换
     }
     function setScore(n) { myScore = Math.max(0, Math.floor(Number(n) || 0)); paintVersus(); }
     function tick() {

@@ -138,15 +138,32 @@ body{
 }
 #app_ctl_score{ color:var(--accent); }     /* 我方 = 强调色 */
 #app_ctl_opp{ color:var(--muted); }         /* 对手 = 弱化 */
-/* 对抗条(拔河):外框占中间弹性空间,底色=对手侧;.ctl-vs-fill 从左按我方份额填充,右边缘=中线 */
+/* 对抗条(格斗对撞):颜色表状态不表身份——领先侧=领先色、落后侧=落后色,战线一移颜色跟着换。
+   左段宽=我方占比、右段=对手;默认(我领先)左=领先色/右=落后色,.behind 时两侧互换;战线处爆闪火花 */
 .ctl-vs{
-  flex:1 1 auto; min-width:2rem; height:.7rem; position:relative; overflow:hidden;
-  background:var(--muted); border-radius:.4rem;
+  --vs-lead:#3ba55d; --vs-behind:#e5484d;                     /* 领先色 / 落后色 */
+  flex:1 1 auto; min-width:2.5rem; height:.8rem; position:relative; overflow:visible;
+  background:var(--vs-behind); border-radius:.4rem;           /* 右(对手)默认 = 落后色 */
 }
 .ctl-vs-fill{
   position:absolute; left:0; top:0; bottom:0; width:50%;
-  background:var(--accent); border-radius:.4rem 0 0 .4rem;
+  background:var(--vs-lead); border-radius:.4rem 0 0 .4rem;   /* 左(我)默认 = 领先色,右缘=战线 */
   transition:width .2s ease;
+}
+.ctl-vs.behind{ background:var(--vs-lead); }                  /* 我落后:右(对手)= 领先色 */
+.ctl-vs.behind .ctl-vs-fill{ background:var(--vs-behind); }   /*          左(我)  = 落后色 */
+/* 战线爆闪:白热核 + 冷电光双层辉光 + 微闪 = 两股力对撞的火花感;left 由 JS 跟战线走 */
+.ctl-vs-spark{
+  position:absolute; top:50%; left:50%; width:4px; height:150%;
+  transform:translate(-50%,-50%); z-index:2; pointer-events:none;
+  background:#fff; border-radius:2px;
+  box-shadow:0 0 5px 2px #fff, 0 0 10px 4px #9fd8ff, 0 0 16px 6px rgba(74,158,255,.6);
+  transition:left .2s ease;
+  animation:vs-spark .24s steps(2, jump-none) infinite;
+}
+@keyframes vs-spark{
+  0%   { opacity:1;   transform:translate(-50%,-50%) scaleY(1);    }
+  100% { opacity:.55; transform:translate(-50%,-50%) scaleY(1.35); }
 }
 .ctl-run{
   flex:0 0 auto; width:2.4rem; height:2.4rem;
