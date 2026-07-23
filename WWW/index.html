@@ -41,10 +41,8 @@
           if (game) {
             /* 通过邀请码进游戏,也把该游戏计入本设备的 recent(收到分享链接来玩的人同样受益) */
             if (window.FairPlay && FairPlay.pushRecent) FairPlay.pushRecent(id);
-            var url = game.key + "/" + game.key + ".html?g=" + game.id;   // ?g 定游戏
-            var p = q.get("p");
-            if (p != null) url += "&p=" + encodeURIComponent(p);          // p 内含时长+seed
-            location.replace(url);
+            /* 只把路径换成游戏页,query 原样全带过去(g=id 游戏照读、p 时长+seed、o 对手成绩,及将来新参数)*/
+            location.replace(game.key + "/" + game.key + ".html?" + q.toString());
             return;
           }
         }

@@ -140,7 +140,7 @@
   }
 
   /* ---- 渲染 ---- */
-  function paintScore() { var el = document.getElementById("app_ctl_score"); if (el) el.textContent = score; }
+  function paintScore() { if (ctl) ctl.setScore(score); }   // 成绩写入 control(显示/对抗由 control 时钟统一驱动)
   function render() {
     var prev = {};                                   // 拖拽落点预览:该块真实落格 → 绿(合法)/红(非法)
     if (drag) {
@@ -153,7 +153,7 @@
     for (var k = 0; k < cells.length; k++) {
       var v = board[k], pv = prev[k], el = cells[k];
       el.className = "bc" + (v ? " fill" : "") + (pv ? " " + pv : "");
-      el.style.background = pv ? (pv === "gok" ? "rgba(59,165,93,.38)" : "rgba(229,72,77,.38)") : (v ? colorFor(v) : "");
+      el.style.background = pv ? (pv === "gok" ? "rgba(59,165,93,.38)" : "rgba(229,72,77,.38)") : "";   // 落盘灰底由 .bc.fill 给
     }
     for (var i = 0; i < 3; i++) renderSlot(i);
   }

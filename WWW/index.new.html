@@ -30,17 +30,15 @@
   <script src="games.js"></script>
   <script>
     /* ---- 路由器:邀请码 ?g=<id>&p=<code> → 用 FairCatalog.find 在 typed 树按 id 找游戏,
-       由 key 推路径(key/key.html)+ 透传 p(内含时长+seed)→ 跳游戏;无 g / 找不到 = 显示主页 ---- */
+       由 key 推路径(key/key.html)+ 原样透传全部参数(p 时长+seed、o 对手成绩等)→ 跳游戏;无 g / 找不到 = 显示主页 ---- */
     (function () {
       var q = new URLSearchParams(location.search);
       var g = q.get("g");
       if (!g || !window.FairCatalog) return;
       var game = FairCatalog.find(+g);
       if (!game) return;
-      var url = game.key + "/" + game.key + ".html?g=" + game.id;
-      var p = q.get("p");
-      if (p != null) url += "&p=" + encodeURIComponent(p);
-      location.replace(url);
+      /* 只换路径,query 原样全带(g=id、p、o 及将来新参数)*/
+      location.replace(game.key + "/" + game.key + ".html?" + q.toString());
     })();
   </script>
 

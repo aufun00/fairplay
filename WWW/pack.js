@@ -106,6 +106,21 @@ window.FairPack = (function () {
     return { seed: Number(seed) >>> 0, durIdx: durIdx };
   }
 
+  /* ---- 成绩载荷:非负整数分数 → base58 + 校验(挂邀请链接 ?o=,供对手匀速对抗)。
+     ~7 位数(≤9,999,999)约 5 字符;非法/缺失 → decodeScore 返回 null(调用方当 0)。 ---- */
+  function encodeScore(n) {
+    n = Math.floor(Number(n) || 0);
+    if (n < 0) n = 0;
+    return addCheck(encode(BigInt(n)));
+  }
+  function decodeScore(str) {
+    if (typeof str !== "string") return null;
+    var body = stripCheck(str.trim());
+    if (body === null) return null;
+    var n = decode(body);
+    return n === null ? null : Number(n);
+  }
+
   /* digits(每位 0..base-1)→ 当 base 进制大数 → base58 + 校验 */
   function packBase(digits, base) {
     const b = BigInt(base);
@@ -130,6 +145,7 @@ window.FairPack = (function () {
     ALPHABET: ALPHABET, encode: encode, decode: decode,
     addCheck: addCheck, stripCheck: stripCheck,
     shuffle: shuffle, packBase: packBase, unpackBase: unpackBase,
-    rng: rng, encodeSeed: encodeSeed, decodeSeed: decodeSeed
+    rng: rng, encodeSeed: encodeSeed, decodeSeed: decodeSeed,
+    encodeScore: encodeScore, decodeScore: decodeScore
   };
 })();

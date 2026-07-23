@@ -1,8 +1,9 @@
-/* FairPlay 控制栏(游戏页第二区,唯一来源)—— 时间/成绩框 + ▶/⏸ + 统一时钟 + run/pause/end 接口。
+/* FairPlay 控制栏(游戏页第二区,唯一来源)—— 5 格:时间 · ▶/⏸ · 我的成绩 · 对抗条 · 对手成绩 + 统一时钟。
    游戏页在 topbar 与 stage 之间留空壳 <div id="app_control"></div>;本文件注入内容并暴露 FairPlay.control.init()。
-   归属:时间归控制栏(时钟驱动 #app_ctl_time,游戏只给 formatTime);成绩框 #app_ctl_score = 游戏输出口(游戏直接写)。
+   归属:成绩全归控制栏——游戏只调 setScore(n) 喂原始分,显示/对手匀速对抗/拔河条均由本文件的时钟统一驱动。
+     对手最终分从邀请链接 ?o= 读(FairPack.decodeScore,缺失=0);假设匀速获得 → oppNow=oppFinal×(已用/时长)。
    暂停/结果弹窗只盖 stage(openModal mount=stage);焦点丢失自动暂停;结束禁用按钮。
-   接口:FairPlay.control.init({ stage, rules, onRun, onPause, onTick, formatTime }) → { run, pause, end, elapsed, phase } */
+   接口:FairPlay.control.init({ stage, rules, onRun, onPause }) → { run, pause, end, elapsed, phase, setTimer, addPenalty, setScore } */
 (function () {
   window.FairPlay = window.FairPlay || {};
   window.FairPlay.control = window.FairPlay.control || {};
@@ -13,19 +14,28 @@
     if (typeof stage === "string") stage = document.querySelector(stage);
     if (!stage) return null;
 
-    /* ---- 控制栏内容(左时间框 · 中 ▶/⏸ · 右成绩框)---- */
+    /* ---- 控制栏内容(5 格:时间 · ▶/⏸ · 我 · 对抗条 · 对手)---- */
     var bar = document.getElementById("app_control");
     if (bar) {
       bar.innerHTML =
-        '<div class="ctl-side"><div id="app_ctl_time" class="ctl-box">0.0</div></div>' +
+        '<div id="app_ctl_time" class="ctl-num">0.0</div>' +
         '<button type="button" id="app_ctl_run" class="ctl-run" aria-label="Start">' +
           '<svg class="ic" aria-hidden="true"><use href="#ic_play"/></svg>' +
         '</button>' +
-        '<div class="ctl-side"><div id="app_ctl_score" class="ctl-box"></div></div>';
+        '<div id="app_ctl_score" class="ctl-num">0</div>' +
+        '<div class="ctl-vs"><div class="ctl-vs-fill"></div></div>' +
+        '<div id="app_ctl_opp" class="ctl-num">0</div>';
     }
     var runBtn = document.getElementById("app_ctl_run");
     var runUse = runBtn ? runBtn.querySelector("use") : null;
     var timeEl = document.getElementById("app_ctl_time");
+    var scoreEl = document.getElementById("app_ctl_score");
+    var oppEl = document.getElementById("app_ctl_opp");
+    var vsFill = bar ? bar.querySelector(".ctl-vs-fill") : null;
+
+    /* 对抗:myScore 由游戏经 setScore 写;对手最终分从 ?o= 读一次(缺失=0),匀速爬升由时钟算 */
+    var myScore = 0;
+    var oppFinal = (window.FairPack && FairPack.decodeScore(new URLSearchParams(location.search).get("o"))) || 0;
 
     /* ---- stage 级遮盖 + 规则/帮助卡(开始/暂停用,不透明防偷看)---- */
     var cover = document.createElement("div");
@@ -44,10 +54,24 @@
     }
     function shownMs() { return timer.mode === "down" ? Math.max(0, timer.duration - elapsed()) : elapsed(); }
     function paintTime() { if (timeEl) timeEl.textContent = fmt(shownMs()); }
+    /* 对手匀速现值:仅倒计时有时长基准时按比例爬升(无基准 = 对手未开始 → 0);到点/越界钳到 oppFinal */
+    function oppNow() {
+      if (!(timer.mode === "down" && timer.duration > 0)) return 0;
+      var f = elapsed() / timer.duration; if (f < 0) f = 0; if (f > 1) f = 1;
+      return Math.round(oppFinal * f);
+    }
+    /* 画我/对手成绩框 + 拔河中线(fill 宽 = 我方份额 my/(my+对手现值);双 0 → 居中 50%) */
+    function paintVersus() {
+      var opp = oppNow();
+      if (scoreEl) scoreEl.textContent = myScore;
+      if (oppEl) oppEl.textContent = opp;
+      if (vsFill) { var total = myScore + opp; vsFill.style.width = (total > 0 ? (myScore / total * 100) : 50) + "%"; }
+    }
+    function setScore(n) { myScore = Math.max(0, Math.floor(Number(n) || 0)); paintVersus(); }
     function tick() {
-      paintTime();
-      if (timer.mode === "down" && !timer.fired && elapsed() >= timer.duration) {   // 超时:停表 + 通知游戏
-        timer.fired = true; stopClock();
+      paintTime(); paintVersus();
+      if (timer.mode === "down" && !timer.fired && elapsed() >= timer.duration) {   // 超时:停表 + 定格对手最终分 + 通知游戏
+        timer.fired = true; stopClock(); paintVersus();
         if (timer.onTimeout) timer.onTimeout();
       }
     }
@@ -82,7 +106,7 @@
     }
     function end(kind, o) {
       stopClock(); phase = "ended"; cover.hidden = true;
-      paintBtn(); paintTime();
+      paintBtn(); paintTime(); paintVersus();   // 定格最终对抗态(对手现值按结束时刻的已用时长)
       showResult(o || {});
     }
 
@@ -127,9 +151,10 @@
           card.querySelector(".res-score").textContent = L.res_share_score || "Share my score";
           card.querySelector(".res-new").textContent = L.res_new_challenge || "Start my challenge";
           card.querySelector(".res-more").textContent = L.res_more_games || "See other games";
-          /* ① 发布我成绩:当前局 iCode + 分数(将来挂 ghost 供幽灵对战),分享后停留 */
+          /* ① 发布我成绩:当前局 iCode + 分数打包进链接 &o=(base58,不显示)→ 对手匀速对抗;分享后停留 */
           card.querySelector(".res-score").addEventListener("click", function () {
-            FairPlay.share(scoreText(), link(seedParam));
+            var withScore = link(seedParam) + "&o=" + FairPack.encodeScore(o.score);
+            FairPlay.share(scoreText(), withScore);
           });
           /* ② 发起我的挑战:现掷新 seed(同当前局时长)→ 存 history → 分享,停留 */
           card.querySelector(".res-new").addEventListener("click", function () {
@@ -145,7 +170,7 @@
       });
     }
 
-    paintBtn(); paintTime();
-    return { run: run, pause: pause, end: end, elapsed: elapsed, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty };
+    paintBtn(); paintTime(); paintVersus();
+    return { run: run, pause: pause, end: end, elapsed: elapsed, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty, setScore: setScore };
   };
 })();

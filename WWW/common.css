@@ -128,15 +128,26 @@ body{
   padding:0 .6rem;
 }
 #app_control:empty{ display:none; }   /* init 前的空壳不占位 */
-.ctl-side{ flex:1 1 0; min-width:0; display:flex; justify-content:center; }   /* 左/右半区,框在半区内居中 */
-.ctl-box{
-  width:88%; text-align:center;
+/* 三个数字框(时间 / 我 / 对手):定宽 = 容纳 6~7 位 tabular 数字,不随数值增长抖动 */
+.ctl-num{
+  flex:0 0 auto; min-width:4.4rem; text-align:center;
   background:var(--bg); border:1px solid var(--line); border-radius:.6rem;
-  padding:.15rem .4rem; font-variant-numeric:tabular-nums;
-  color:var(--fg); font-weight:700; font-size:1.15rem; line-height:1.35;
+  padding:.15rem .35rem; font-variant-numeric:tabular-nums;
+  color:var(--fg); font-weight:700; font-size:.9rem; line-height:1.35;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-#app_ctl_score{ color:var(--muted); font-weight:600; }
+#app_ctl_score{ color:var(--accent); }     /* 我方 = 强调色 */
+#app_ctl_opp{ color:var(--muted); }         /* 对手 = 弱化 */
+/* 对抗条(拔河):外框占中间弹性空间,底色=对手侧;.ctl-vs-fill 从左按我方份额填充,右边缘=中线 */
+.ctl-vs{
+  flex:1 1 auto; min-width:2rem; height:.7rem; position:relative; overflow:hidden;
+  background:var(--muted); border-radius:.4rem;
+}
+.ctl-vs-fill{
+  position:absolute; left:0; top:0; bottom:0; width:50%;
+  background:var(--accent); border-radius:.4rem 0 0 .4rem;
+  transition:width .2s ease;
+}
 .ctl-run{
   flex:0 0 auto; width:2.4rem; height:2.4rem;
   display:inline-flex; align-items:center; justify-content:center;

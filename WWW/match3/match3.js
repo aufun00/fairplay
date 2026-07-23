@@ -82,7 +82,7 @@
   }
 
   /* ---- 渲染 ---- */
-  var boardEl, scoreEl, cells = [];
+  var boardEl, cells = [];
   var selected = null, score = 0, busy = true, ended = false, started = false, ctl = null;
 
   function buildUI() {
@@ -106,7 +106,7 @@
       cells[k].className = "cell" + (v ? " c" + v : "") +
         ((selected && selected.r === r && selected.c === c) ? " sel" : "");
     }
-    if (scoreEl) scoreEl.textContent = score;
+    if (ctl) ctl.setScore(score);   // 成绩写入 control(显示/对抗由 control 时钟统一驱动)
   }
 
   /* ---- 输入 ---- */
@@ -156,8 +156,7 @@
       onRun: onRun, onPause: onPause
     });
     ctl.setTimer({ mode: "down", duration: DURATION, onTimeout: finish });   // 倒计 30s,超时 finish
-    scoreEl = document.getElementById("app_ctl_score");
-    if (scoreEl) scoreEl.textContent = score;
+    ctl.setScore(score);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
