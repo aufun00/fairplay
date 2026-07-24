@@ -42,16 +42,11 @@
     boost:   { lethal: false, scoreMul: 3,  spdMul: 6,  draw: drawBoost   }  // 加速带:+3 分单位、+6 速度单位
   };
 
-  /* ---- 凭邀请码进 ---- */
-  var q = new URLSearchParams(location.search);
-  var dec = FairPlay.requireSeed(q.get("p"));
-  if (!dec) return;
-  var node = FairCatalog.find(parseInt(q.get("g"), 10));
+  /* ---- 凭邀请码进 + 查注册表 + 时长(统一入口 FairPlay.enterGame)---- */
+  var G = FairPlay.enterGame(); if (!G) return;
+  var node = G.node;
   var LANES = (node && node.board) || 3;
-  var durs = (node && node.durs) || [30];
-  var LIMIT = durs[dec.durIdx] || durs[0];
-  function L() { return (window.FairPlay && FairPlay.L()) || {}; }
-  function gameName() { var LL = L(); return (LL.runner && LL.runner.name) || "runner"; }
+  var LIMIT = G.limit;
 
   /* ---- 伪 3D 场景 ---- */
   var SEG = CFG.segmentLength, ROADW = CFG.roadWidth, CAMH = CFG.cameraHeight;
@@ -65,7 +60,7 @@
   window.addEventListener("resize", function () { road.resize(); draw(); });
 
   /* ---- 确定性赛道:全部随机取自同一条 rng 流(同码逐段一致)---- */
-  var rng = FairPack.rng(dec.seed);
+  var rng = FairPack.rng(G.seed);
   var TRACK_LEN = 6000;
   var TRACK = [];
   for (var z = 0; z < TRACK_LEN; z++) TRACK.push({ items: [] });
@@ -111,10 +106,10 @@
   /* ---- 结束 ---- */
   function finish() {
     if (ended) return; ended = true;
-    var LL = L();
+    var LL = FairPlay.L();
     ctl.end(crashed ? "crash" : "timeout", {
       title: (crashed ? LL.rn_crash : LL.rn_finish) || (crashed ? "Crashed!" : "You made it!"),
-      gameName: gameName(), score: score
+      gameName: FairPlay.gameName(node), score: score
     });
   }
   function crash() { if (ended) return; crashed = true; ctl.expire(); }
@@ -247,7 +242,7 @@
     road.resize();
     ctl = window.FairPlay.control.init({
       stage: "#runner_stage",
-      rules: L().rn_rules || "Swipe left/right to switch lanes. Grab coins, dodge the barriers. One hit ends your run.",
+      rules: FairPlay.L().rn_rules || "Swipe left/right to switch lanes. Grab coins, dodge the barriers. One hit ends your run.",
       onRun: function () { road.resize(); }, onPause: function () {}
     });
     ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: finish });

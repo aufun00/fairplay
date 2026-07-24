@@ -14,18 +14,13 @@
   };
   var ANIM_MS = 120, PAD = 7, GAP = 7;   // 动画时长(与 CSS transition 对齐)/ 棋盘内边距 / 格间距
 
-  /* ---- 凭邀请码进 ---- */
-  var q = new URLSearchParams(location.search);
-  var dec = FairPlay.requireSeed(q.get("p"));
-  if (!dec) return;
-  var node = FairCatalog.find(parseInt(q.get("g"), 10));
-  var durs = (node && node.durs) || [30];
-  var LIMIT = durs[dec.durIdx] || durs[0];
-  function L() { return (window.FairPlay && FairPlay.L()) || {}; }
-  function gameName() { var LL = L(); return (LL["2048"] && LL["2048"].name) || "2048"; }
+  /* ---- 凭邀请码进 + 查注册表 + 时长(统一入口 FairPlay.enterGame)---- */
+  var G = FairPlay.enterGame(); if (!G) return;
+  var node = G.node;
+  var LIMIT = G.limit;
 
   var N = CFG.board;
-  var rng = FairPack.rng(dec.seed);
+  var rng = FairPack.rng(G.seed);
 
   /* ---- 状态 ---- */
   var tiles = [];                        // { val, r, c, el, 及临时标记 targetCell/absorbed/mergedThisMove }
@@ -89,14 +84,14 @@
     (function (el) { setTimeout(function () { el.classList.remove("spawn"); }, ANIM_MS + 40); })(t.el);
   }
 
-  function timeMul() { var t = (LIMIT * 1000 - ctl.elapsed()) / 100; return t > 0 ? t * CFG.scoreCoef : 0; }   // 剩余 0.1s 数 × scoreCoef
+  function timeMul() { return ctl.remaining() * CFG.scoreCoef; }   // 剩余 0.1s 数 × scoreCoef(control 统一提供)
 
   function finish() {
     if (ended) return; ended = true;
-    var LL = L();
+    var LL = FairPlay.L();
     ctl.end(stuck ? "stuck" : "timeout", {
       title: (stuck ? LL.g2_stuck : LL.g2_timeup) || (stuck ? "No moves left!" : "Time's up!"),
-      gameName: gameName(), score: Math.floor(score)
+      gameName: FairPlay.gameName(node), score: Math.floor(score)
     });
   }
 
@@ -182,7 +177,7 @@
     for (var i = 0; i < tiles.length; i++) tiles[i].el.classList.remove("new");   // 起始块不标「新」
     ctl = window.FairPlay.control.init({
       stage: "#g2048_stage",
-      rules: L().g2_rules || "Swipe (or arrow keys) to slide tiles; equal tiles merge. Merge as much as you can before time runs out — earlier merges score more.",
+      rules: FairPlay.L().g2_rules || "Swipe (or arrow keys) to slide tiles; equal tiles merge. Merge as much as you can before time runs out — earlier merges score more.",
       onRun: function () { layout(); }, onPause: hideDpad
     });
     ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: finish });

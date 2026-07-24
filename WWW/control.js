@@ -55,6 +55,8 @@
       return (min > 0 ? min + ":" + (sec < 10 ? "0" : "") + sec : sec) + "." + d;
     }
     function shownMs() { return timer.mode === "down" ? Math.max(0, timer.duration - elapsed()) : elapsed(); }
+    /* 剩余时间 = 整数 1/10s 数(与显示的 .十 同粒度);仅倒计时有意义,否则 0。供计分时间权重复用 */
+    function remaining() { return (timer.mode === "down" && timer.duration > 0) ? Math.max(0, Math.floor((timer.duration - elapsed()) / 100)) : 0; }
     function paintTime() { if (timeEl) timeEl.textContent = fmt(shownMs()); }
     /* 对手匀速现值:仅倒计时有时长基准时按比例爬升(无基准 = 对手未开始 → 0);到点/越界钳到 oppFinal */
     function oppNow() {
@@ -184,6 +186,6 @@
     }
 
     paintBtn(); paintTime(); paintVersus();
-    return { run: run, pause: pause, end: end, expire: expire, elapsed: elapsed, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty, setScore: setScore };
+    return { run: run, pause: pause, end: end, expire: expire, elapsed: elapsed, remaining: remaining, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty, setScore: setScore };
   };
 })();

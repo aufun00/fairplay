@@ -4,18 +4,11 @@
    凭邀请码进:?g=<id> 定游戏(查注册表拿 board/durs),?p=<code> 经 FairPack.decodeSeed 解出 {seed, durIdx}。
    序列:seed → 确定性 PRNG(FairPack.rng)洗一袋 [1..19]、发完再洗 = 均匀 19-bag(同 seed 同题,跨端逐位一致)。 */
 (function () {
-  /* ---- 凭邀请码进:?p → {seed,durIdx};无 / 校验不过 → 回主页 ---- */
-  var q = new URLSearchParams(location.search);
-  var dec = FairPlay.requireSeed(q.get("p"));
-  if (!dec) return;
-
-  /* ---- 按 ?g 在注册表查自己:board / durs → 尺寸与时长 ---- */
-  var node = FairCatalog.find(parseInt(q.get("g"), 10));
+  /* ---- 凭邀请码进 + 查注册表 + 时长(统一入口 FairPlay.enterGame)---- */
+  var G = FairPlay.enterGame(); if (!G) return;
+  var node = G.node;
   var BOARD = (node && node.board) || 8;
-  var durs = (node && node.durs) || [30];
-  var LIMIT = durs[dec.durIdx] || durs[0];              // 秒(30/60,均限时)
-  function gameName() { var LL = (window.FairPlay && FairPlay.L()) || {}; return (LL.blockfit && LL.blockfit.name) || "blockfit"; }
-  function L() { return (window.FairPlay && FairPlay.L()) || {}; }
+  var LIMIT = G.limit;                                  // 秒(30/60,均限时)
 
   /* ---- 19 种块(单元格偏移 [row,col]),不旋转 ---- */
   var PIECES = {
@@ -33,7 +26,7 @@
   function colorFor(v) { return "hsl(" + ((v * 47) % 360) + " 62% 56%)"; }
 
   /* ---- 确定性 19-bag:PRNG 洗 [1..19]、发完再洗(每块每轮恰一次,均匀且跨端同序)---- */
-  var rng = FairPack.rng(dec.seed);
+  var rng = FairPack.rng(G.seed);
   var bag = [], bagIdx = 0;
   function refillBag() { bag = []; for (var v = 1; v <= 19; v++) bag.push(v); rng.shuffle(bag); bagIdx = 0; }
   function nextBlock() { if (bagIdx >= bag.length) refillBag(); return bag[bagIdx++]; }
@@ -63,7 +56,7 @@
   /* ---- 消除 + 计分 ----
      每次消除得分 = base × 2^(lines-1) × 2^(combo-1)
        base = 剩余倒计时(剩余 ms/100,30s 峰值 300);lines = 该步同时消的行+列数;combo = 连消计数 */
-  function timeBase() { return Math.max(0, Math.floor((LIMIT * 1000 - ctl.elapsed()) / 100)); }
+  function timeBase() { return ctl.remaining(); }       // 剩余 0.1s 数(control 统一提供)
   function resolveClears() {
     var rows = [], cols = [], r, c, full;
     for (r = 0; r < BOARD; r++) { full = true; for (c = 0; c < BOARD; c++) if (!board[r*BOARD+c]) { full = false; break; } if (full) rows.push(r); }
@@ -180,8 +173,8 @@
   function endGame(kind) {
     if (ended) return; ended = true;
     ctl.end(kind, {
-      title: (kind === "timeout" ? L().bf_timeup : L().bf_over) || "Game over",
-      gameName: gameName(), score: score
+      title: (kind === "timeout" ? FairPlay.L().bf_timeup : FairPlay.L().bf_over) || "Game over",
+      gameName: FairPlay.gameName(node), score: score
     });
   }
 
@@ -210,7 +203,7 @@
     deal();
     ctl = window.FairPlay.control.init({
       stage: "#blockfit_stage",
-      rules: L().bf_rules || "Place all three pieces. Fill a row or column to clear it.",
+      rules: FairPlay.L().bf_rules || "Place all three pieces. Fill a row or column to clear it.",
       onRun: onRun, onPause: onPause
     });
     ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: function () { endGame("timeout"); } });

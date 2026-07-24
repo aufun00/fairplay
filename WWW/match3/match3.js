@@ -7,19 +7,14 @@
   var COLORS = 6;
   var L = (window.FairPlay && FairPlay.L()) || (window.I18N && window.I18N.en) || {};
 
-  /* ---- 凭邀请码进:?p → {seed,durIdx};无 / 校验不过 = 非正常流程 → 回主页 ---- */
-  var q = new URLSearchParams(location.search);
-  var dec = FairPlay.requireSeed(q.get("p"));
-  if (!dec) return;
-
-  /* ---- 按 ?g 在注册表查自己:board / durs → 尺寸与时长 ---- */
-  var node = FairCatalog.find(parseInt(q.get("g"), 10));
+  /* ---- 凭邀请码进 + 查注册表 + 时长(统一入口 FairPlay.enterGame)---- */
+  var G = FairPlay.enterGame(); if (!G) return;
+  var node = G.node;
   var SIZE = (node && node.board) || 8;
-  var durs = (node && node.durs) || [30];
-  var DURATION = (durs[dec.durIdx] || durs[0]) * 1000;
+  var DURATION = G.limit * 1000;
 
   /* ---- 确定性色流:PRNG 洗一袋(每色 COLORS 个)→ 发完再洗 = 无限均匀,跨端同流 ---- */
-  var rng = FairPack.rng(dec.seed);
+  var rng = FairPack.rng(G.seed);
   function makeStream() {
     var bag = [], idx = 0;
     function refill() {
@@ -145,7 +140,7 @@
   function finish() {                    // 超时 → 结束:禁用按钮 + stage 级分享结果
     if (ended) return; ended = true;
     busy = true; selected = null; render();
-    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", gameName: (L.match3 && L.match3.name) || "", score: score });
+    ctl.end("timeout", { title: L.m3_timeup || "Time's up!", gameName: FairPlay.gameName(node), score: score });
   }
 
   function boot() {

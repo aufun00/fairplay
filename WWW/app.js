@@ -100,6 +100,25 @@ window.FairPlay.requireSeed = function (param, homeUrl) {
   return dec;
 };
 
+/* 游戏页统一入口:凭邀请码进(requireSeed)+ 按 ?g 查注册表(FairCatalog)+ 算时长。
+   非法/缺失自动回主页并返回 null。调用方:var G = FairPlay.enterGame(); if (!G) return;
+   → { seed, durIdx, node, durs, limit(秒) }。取棋盘/车道用 G.node.board,时长用 G.limit。 */
+window.FairPlay.enterGame = function (homeUrl) {
+  var q = new URLSearchParams(location.search);
+  var dec = window.FairPlay.requireSeed(q.get("p"), homeUrl);
+  if (!dec) return null;
+  var node = (window.FairCatalog && FairCatalog.find(parseInt(q.get("g"), 10))) || null;
+  var durs = (node && node.durs) || [30];
+  return { seed: dec.seed, durIdx: dec.durIdx, node: node, durs: durs, limit: durs[dec.durIdx] || durs[0] };
+};
+
+/* 游戏显示名:从注册表 key 取当前语言的 name;缺则回退 key(不再各游戏硬编码)。 */
+window.FairPlay.gameName = function (node) {
+  if (!node) return "";
+  var t = window.FairPlay.L()[node.key];
+  return (t && t.name) || node.key || "";
+};
+
 /* 通用弹窗原语:造 .fp-overlay 背板 + .fp-card 卡片,调用方用 build(card, close) 填内容。
    opts: { dismissible=true(点背板关闭), cardClass, build, html,
            mount:element|selector —— 挂载点决定覆盖范围:默认 #app_frame=全窗(topbar 域);
