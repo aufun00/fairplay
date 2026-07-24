@@ -100,6 +100,11 @@
         '<path d="M13 10l4 2 2-2"/>' +
         '<path d="M8 22l2-4"/>' +
       '</symbol>' +
+      /* 2048:2×2 圆角方块(合并示意)*/
+      '<symbol id="ic_2048" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/>' +
+        '<rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/>' +
+      '</symbol>' +
     '</svg>';
 
   function inject() {

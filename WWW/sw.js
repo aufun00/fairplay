@@ -34,7 +34,10 @@ const SHELL = [
   "./blockfit/blockfit.js",
   "./runner/runner.html",
   "./runner/runner.lang.js",
-  "./runner/runner.js"
+  "./runner/runner.js",
+  "./2048/2048.html",
+  "./2048/2048.lang.js",
+  "./2048/2048.js"
 ];
 
 self.addEventListener("install", (e) => {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>2048 — FairPlay</title>
+  <link rel="stylesheet" href="../common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script src="../app.js"></script>
+  <script>FairPlay.registerSW("../sw.js");</script>
+
+  <style>
+    /* 2048 stage:居中方形棋盘。背景层 .g2048-bg = N×N 空格;tile 层 .g2048-tiles = 绝对定位、transform 滑动 */
+    #g2048_stage { display:flex; align-items:center; justify-content:center; padding:.6rem; }
+    #g2048_board {
+      position:relative; width:min(92vw, 26rem); aspect-ratio:1/1;
+      padding:7px; background:var(--line); border-radius:.6rem;
+      touch-action:none; -webkit-user-select:none; user-select:none;
+    }
+    .g2048-bg {
+      position:absolute; inset:7px; display:grid; gap:7px;
+      grid-template-columns:repeat(var(--n,5),1fr); grid-template-rows:repeat(var(--n,5),1fr);
+    }
+    .g2048-bg .cell { background:rgba(127,127,127,.12); border-radius:.4rem; }
+    .g2048-tiles { position:absolute; inset:7px; }
+    .g2048-tiles .tile {
+      position:absolute; top:0; left:0; box-sizing:border-box;
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
+      border-radius:.4rem; font-weight:800; font-variant-numeric:tabular-nums; line-height:1;
+      color:#776e65; transition:transform .12s ease; will-change:transform;
+    }
+    .g2048-tiles .tile.new { filter:brightness(1.16); }        /* 新出块:一点亮度差,不喧宾夺主 */
+    .g2048-tiles .tile.spawn { animation:g2048in .16s ease; }
+    .g2048-tiles .tile.merged { animation:g2048merge .16s ease; }
+    @keyframes g2048in { from{ opacity:0 } to{ opacity:1 } }
+    @keyframes g2048merge { 0%{ filter:brightness(1) } 50%{ filter:brightness(1.45) } 100%{ filter:brightness(1) } }
+    /* 四向箭头:点选浮现,可点,也当键盘操作图示 */
+    .g2048-dpad { position:absolute; inset:0; display:none; align-items:center; justify-content:center; }
+    .g2048-dpad.show { display:flex; }
+    .g2048-dpad .pad { display:grid; grid-template-columns:repeat(3,2.6rem); grid-template-rows:repeat(3,2.6rem); gap:.35rem; }
+    .g2048-dpad .ar {
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      background:rgba(20,22,26,.5); color:#fff; border-radius:.5rem; font-size:1.2rem; line-height:1;
+    }
+    .g2048-dpad .ar.u { grid-area:1/2 } .g2048-dpad .ar.l { grid-area:2/1 }
+    .g2048-dpad .ar.r { grid-area:2/3 } .g2048-dpad .ar.d { grid-area:3/2 }
+  </style>
+</head>
+<body>
+  <div id="app_frame">
+    <header id="app_topbar"></header>
+    <div id="app_control"></div>
+    <main id="g2048_stage" class="app_stage"></main>
+  </div>
+
+  <!-- 版本号 + 通用编码 -->
+  <script src="../version.js"></script>
+  <script src="../pack.js"></script>
+  <!-- 注册表(游戏页按 ?g 查自己)-->
+  <script src="../games.js"></script>
+  <!-- 先通用置顶栏文本,再游戏专属文本 -->
+  <script src="../index.lang.js"></script>
+  <script src="2048.lang.js"></script>
+  <!-- 图标雪碧图 + 置顶栏注入 -->
+  <script src="../assets/icons.js"></script>
+  <script src="../topbar.js"></script>
+  <script>FairPlay.applyI18n();</script>
+  <!-- 控制栏 + 游戏逻辑 -->
+  <script src="../control.js"></script>
+  <script src="2048.js"></script>
+</body>
+</html>
