@@ -41,7 +41,10 @@ const SHELL = [
   "./2048/2048.js",
   "./snake/snake.html",
   "./snake/snake.lang.js",
-  "./snake/snake.js"
+  "./snake/snake.js",
+  "./stacker/stacker.html",
+  "./stacker/stacker.lang.js",
+  "./stacker/stacker.js"
 ];
 
 self.addEventListener("install", (e) => {

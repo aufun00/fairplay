@@ -110,6 +110,12 @@
         '<path d="M4 20h6a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>' +
         '<circle cx="18.5" cy="8" r="1.6" fill="currentColor" stroke="none"/>' +
       '</symbol>' +
+      /* stacker:三层堆叠方块(等距示意)*/
+      '<symbol id="ic_stacker" viewBox="0 0 24 24" fill="currentColor" stroke="none">' +
+        '<path d="M12 3l7 3.5-7 3.5-7-3.5z" opacity=".95"/>' +
+        '<path d="M12 10l7-3.5v3l-7 3.5-7-3.5v-3z" opacity=".7"/>' +
+        '<path d="M12 16.5l7-3.5v3l-7 3.5-7-3.5v-3z" opacity=".5"/>' +
+      '</symbol>' +
     '</svg>';
 
   function inject() {

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stacker — FairPlay</title>
+  <link rel="stylesheet" href="../common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script src="../app.js"></script>
+  <script>FairPlay.registerSW("../sw.js");</script>
+
+  <style>
+    /* Stacker:等距伪 3D 画在 canvas 上;点屏任意处落块 */
+    #stacker_stage { padding:0; overflow:hidden; }
+    #st_canvas { width:100%; height:100%; display:block; touch-action:none; -webkit-user-select:none; user-select:none; }
+  </style>
+</head>
+<body>
+  <div id="app_frame">
+    <header id="app_topbar"></header>
+    <div id="app_control"></div>
+    <main id="stacker_stage" class="app_stage"><canvas id="st_canvas"></canvas></main>
+  </div>
+
+  <script src="../version.js"></script>
+  <script src="../pack.js"></script>
+  <script src="../games.js"></script>
+  <script src="../index.lang.js"></script>
+  <script src="stacker.lang.js"></script>
+  <script src="../assets/icons.js"></script>
+  <script src="../topbar.js"></script>
+  <script>FairPlay.applyI18n();</script>
+  <script src="../control.js"></script>
+  <script src="stacker.js"></script>
+</body>
+</html>

@@ -15,6 +15,7 @@ window.GAMES = [
   { node_type:"game", key:"runner",   id:5, icon:"runner",   board:3, durs:[30, 60] },
   { node_type:"game", key:"2048",     id:6, icon:"2048",     board:5, durs:[30, 60] },
   { node_type:"game", key:"snake",    id:7, icon:"snake",    board:15, durs:[30, 60] },
+  { node_type:"game", key:"stacker",  id:8, icon:"stacker",  board:7, durs:[30, 60] },
 ];
 
 /* ---- 目录查询 API(唯一实现,全站共用:游戏页 ?g 查自己、首页扁平渲染、路由器分发)。
