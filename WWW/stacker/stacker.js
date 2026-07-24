@@ -8,16 +8,16 @@
   /* ============ 可调参数(Ctrl-F5 硬刷即看)============ */
   var CFG = {
     baseSize:   6,     // 满 footprint 世界尺寸(纯比例基准)
-    baseSpeed:  3.5,   // 起步滑动速度(世界单位/秒)
-    speedBase:  0.5,   // 每放一块加速(spdMul × 它)
+    baseSpeed:  2.8,   // 起步滑动速度(世界单位/秒)
+    speedBase:  0.25,  // 每放一块加速(spdMul × 它)
     scoreCoef:  0.5    // 保留面积 × scoreMul ×(剩余 0.1s × 此)
   };
   /* 形状块表:shape=box 集生成;scoreMul 面积越小越高;weight=seed 掷的稀有度;spdMul=放置后加速 */
   var TYPES = {
-    solid:  { weight: 7, scoreMul: 1, spdMul: 1, shape: "full"    },  // 满格(常见、稳)
-    frame:  { weight: 2, scoreMul: 2, spdMul: 1, shape: "border"  },  // 边框(4 box)
-    cross:  { weight: 1, scoreMul: 3, spdMul: 1, shape: "cross"   },  // 十字(3 box)
-    corner: { weight: 1, scoreMul: 5, spdMul: 1, shape: "corners" }   // 四角(4 box,最小最难最高分)
+    solid:  { weight:10, scoreMul: 1, spdMul: 1, shape: "full"    },  // 满格(常见、稳)
+    frame:  { weight: 5, scoreMul: 2, spdMul: .8, shape: "border"  },  // 边框(4 box)
+    cross:  { weight: 3, scoreMul: 3, spdMul: .5, shape: "cross"   },  // 十字(3 box)
+    corner: { weight: 1, scoreMul: 5, spdMul: .1, shape: "corners" }   // 四角(4 box,最小最难最高分)
   };
 
   var G = FairPlay.enterGame(); if (!G) return;
@@ -95,6 +95,7 @@
     var t = TYPES[block.type];
     score += area * t.scoreMul * timeVal();
     speed += t.spdMul * CFG.speedBase;
+    if (speed < CFG.baseSpeed) speed = CFG.baseSpeed;      // 托底:不低于起始速度
     ctl.setScore(score);
     layers.push({ boxes: ret, hue: (placedCount * 14) % 360, idx: placedCount });
     if (layers.length > VIS) layers.shift();               // 只留窗口内的层
