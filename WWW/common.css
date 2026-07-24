@@ -173,6 +173,29 @@ body{
 .ctl-run:disabled{ opacity:.4; cursor:default; }
 .ctl-run .ic{ width:1.4rem; height:1.4rem; }
 
+/* ===== 公共方向控件 dirPad(pad.js):常驻半透明 D-pad(底部居中)+ 全屏 swipe ===== */
+.fp-dpad{
+  position:fixed; left:50%; bottom:1.1rem; transform:translateX(-50%);
+  display:grid; grid-template-columns:repeat(3,2.9rem); grid-template-rows:repeat(3,2.9rem); gap:.35rem;
+  z-index:800; opacity:.5; pointer-events:none;   /* 容器透传滑动;仅按钮吃点击 */
+}
+.fp-dpad.axes-x{ grid-template-rows:2.9rem; }
+.fp-dpad .ar{
+  pointer-events:auto; display:flex; align-items:center; justify-content:center;
+  background:rgba(20,22,26,.55); color:#fff; border:none; border-radius:.6rem;
+  font-size:1.2rem; line-height:1; cursor:pointer; -webkit-user-select:none; user-select:none;
+}
+.fp-dpad .ar.u{ grid-area:1/2 } .fp-dpad .ar.l{ grid-area:2/1 } .fp-dpad .ar.r{ grid-area:2/3 } .fp-dpad .ar.d{ grid-area:3/2 }
+.fp-dpad.axes-x .ar.l{ grid-area:1/1 } .fp-dpad.axes-x .ar.r{ grid-area:1/3 }
+
+/* 开局倒计时大字(control.js,盖 stage,数完才 running)*/
+.ctl-count{
+  position:absolute; inset:0; z-index:950; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.28); color:#fff; font-weight:800; font-size:5rem; line-height:1;
+  font-variant-numeric:tabular-nums; pointer-events:none;
+}
+.ctl-count[hidden]{ display:none; }
+
 /* ===== 游戏 play 区(第三区):撑满剩余,并作为 stage 级弹窗/遮盖的定位基准 ===== */
 .app_stage{ flex:1 1 auto; min-height:0; position:relative; overflow:hidden; }
 

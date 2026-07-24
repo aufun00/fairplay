@@ -18,6 +18,7 @@ const SHELL = [
   "./home-core.js",
   "./control.js",
   "./p3d.js",
+  "./pad.js",
   "./pack.js",
   "./games.js",
   "./index.lang.js",

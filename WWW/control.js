@@ -45,6 +45,10 @@
     cover.innerHTML = '<div class="ctl-rules"></div>';
     cover.querySelector(".ctl-rules").textContent = opts.rules || "";
     stage.appendChild(cover);
+    /* 开局倒计时大字(opts.countdown 秒;数完才真正 running,给挪手到 D-pad 的时间)*/
+    var countEl = document.createElement("div");
+    countEl.className = "ctl-count"; countEl.hidden = true;
+    stage.appendChild(countEl);
 
     /* ---- 统一时钟(可暂停;performance.now;startElapsed 供续玩预置)---- */
     var elapsedMs = opts.startElapsed || 0, startTs = 0, running = false, tickId = null, phase = "idle";
@@ -99,11 +103,20 @@
       runBtn.setAttribute("aria-label", label());
     }
 
-    function run() {
-      if (phase === "ended") return;
-      phase = "running"; cover.hidden = true;
+    function reallyRun() {
+      phase = "running"; cover.hidden = true; countEl.hidden = true;
       startClock(); paintBtn(); paintTime();
       if (opts.onRun) opts.onRun();
+    }
+    function run() {
+      if (phase === "ended" || phase === "running" || phase === "counting") return;
+      if (!opts.countdown) { reallyRun(); return; }
+      phase = "counting"; cover.hidden = true; paintBtn();   // 倒计时:遮盖收起、时钟未起,游戏循环因 phase!=="running" 静止
+      var n = opts.countdown; countEl.textContent = n; countEl.hidden = false;
+      var iv = setInterval(function () {
+        n--;
+        if (n <= 0) { clearInterval(iv); reallyRun(); } else countEl.textContent = n;
+      }, 1000);
     }
     function pause() {
       if (phase !== "running") return;

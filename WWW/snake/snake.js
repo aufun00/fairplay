@@ -92,16 +92,14 @@
     render();
   }
 
-  /* ---- 输入:四向(禁 180° 回头,缓冲一步)---- */
+  /* ---- 方向:D-pad + 全屏 swipe + 方向键统一走公共控件 FairPlay.dirPad(boot 里挂)→ setDir。
+     禁 180° 回头;倒计时期间也可预置方向 ---- */
   function setDir(dx, dy) {
-    if (!ctl || ctl.phase() !== "running") return;
+    var ph = ctl && ctl.phase();
+    if (ph !== "running" && ph !== "counting") return;
     if (dx === -nextDir.dx && dy === -nextDir.dy) return;   // 不许直接回头
     nextDir = { dx: dx, dy: dy };
   }
-  document.addEventListener("keydown", function (e) {
-    var d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-    if (d) { e.preventDefault(); setDir(d[0], d[1]); }
-  });
 
   /* ---- 渲染 ---- */
   function render() {
@@ -131,13 +129,6 @@
     boardEl = document.createElement("div"); boardEl.id = "snake_board"; boardEl.style.setProperty("--n", N);
     for (var k = 0; k < N * N; k++) { var c = document.createElement("div"); c.className = "cell"; boardEl.appendChild(c); cells.push(c); }
     stage.appendChild(boardEl);
-    var tsx = null, tsy = null;
-    boardEl.addEventListener("pointerdown", function (e) { tsx = e.clientX; tsy = e.clientY; try { boardEl.setPointerCapture(e.pointerId); } catch (_) {} });
-    boardEl.addEventListener("pointerup", function (e) {
-      if (tsx == null) return; var dx = e.clientX - tsx, dy = e.clientY - tsy; tsx = null;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < CFG.swipeMinPx) return;
-      if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 1 : -1, 0); else setDir(0, dy > 0 ? 1 : -1);
-    });
   }
   function initSnake() {
     var cr = Math.floor(N / 2); snake = [];
@@ -148,12 +139,13 @@
   function boot() {
     buildUI(); initSnake();
     ctl = window.FairPlay.control.init({
-      stage: "#snake_stage",
+      stage: "#snake_stage", countdown: 3,
       rules: FairPlay.L().sn_rules || "Swipe (or arrow keys) to steer. Eat food to grow and score. Don't hit the walls or yourself.",
       onRun: render, onPause: function () {}
     });
     ctl.setTimer({ mode: "down", duration: LIMIT * 1000, onTimeout: finish });
     ctl.setScore(0);
+    FairPlay.dirPad({ onDir: setDir, swipeMinPx: CFG.swipeMinPx });   // 方向输入:D-pad + 全屏 swipe + 方向键
     render(); frame();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
