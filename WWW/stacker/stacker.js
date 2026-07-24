@@ -10,7 +10,8 @@
     baseSize:   6,     // 满 footprint 世界尺寸(纯比例基准)
     baseSpeed:  2.8,   // 起步滑动速度(世界单位/秒)
     speedBase:  0.25,  // 每放一块加速(spdMul × 它)
-    scoreCoef:  0.5    // 保留面积 × scoreMul ×(剩余 0.1s × 此)
+    scoreCoef:  0.5,   // 保留面积 × scoreMul ×(剩余 0.1s × 此)
+    minSize:    1.2    // 切割面任一边 < 此即结束(太小滑动看不出;满尺寸=baseSize)
   };
   /* 形状块表:shape=box 集生成;scoreMul 面积越小越高;weight=seed 掷的稀有度;spdMul=放置后加速 */
   var TYPES = {
@@ -100,6 +101,7 @@
     layers.push({ boxes: ret, hue: (placedCount * 14) % 360, idx: placedCount });
     if (layers.length > VIS) layers.shift();               // 只留窗口内的层
     plane = np; placedCount++;
+    if (Math.min(plane.x1 - plane.x0, plane.z1 - plane.z0) < CFG.minSize) { die(); return; }   // 切割面太小 → 结束
     spawnBlock();
   }
 
