@@ -105,6 +105,11 @@
         '<rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/>' +
         '<rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/>' +
       '</symbol>' +
+      /* snake:S 形身躯 + 头点 */
+      '<symbol id="ic_snake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M4 20h6a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>' +
+        '<circle cx="18.5" cy="8" r="1.6" fill="currentColor" stroke="none"/>' +
+      '</symbol>' +
     '</svg>';
 
   function inject() {

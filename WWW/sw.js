@@ -37,7 +37,10 @@ const SHELL = [
   "./runner/runner.js",
   "./2048/2048.html",
   "./2048/2048.lang.js",
-  "./2048/2048.js"
+  "./2048/2048.js",
+  "./snake/snake.html",
+  "./snake/snake.lang.js",
+  "./snake/snake.js"
 ];
 
 self.addEventListener("install", (e) => {
