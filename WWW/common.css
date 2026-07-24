@@ -190,9 +190,10 @@ body{
 
 /* 开局倒计时大字(control.js,盖 stage,数完才 running)*/
 .ctl-count{
-  position:absolute; inset:0; z-index:950; display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.28); color:#fff; font-weight:800; font-size:5rem; line-height:1;
-  font-variant-numeric:tabular-nums; pointer-events:none;
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:950; pointer-events:none;
+  background:rgba(0,0,0,.35); border-radius:1rem; padding:.2rem 1.3rem;
+  color:#fff; font-weight:800; font-size:4.5rem; line-height:1.15; font-variant-numeric:tabular-nums;
 }
 .ctl-count[hidden]{ display:none; }
 

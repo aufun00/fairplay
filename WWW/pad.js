@@ -29,8 +29,7 @@ window.FairPlay.dirPad = function (opts) {
   defs.forEach(function (b) {
     var el = document.createElement("button");
     el.type = "button"; el.className = "ar " + b[0]; el.textContent = b[1];
-    el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
-    el.addEventListener("click", function (e) { e.stopPropagation(); emit(b[2], b[3]); });
+    el.addEventListener("pointerdown", function (e) { e.preventDefault(); e.stopPropagation(); emit(b[2], b[3]); });   // 按下即触发(不用 click,免触屏点击延迟)
     pad.appendChild(el);
   });
   host.appendChild(pad);
