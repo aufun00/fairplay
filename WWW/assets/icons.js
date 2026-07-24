@@ -92,6 +92,14 @@
         '<rect x="2" y="2" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/><rect x="16" y="2" width="6" height="6" rx="1.2"/>' +
         '<rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="2" y="16" width="6" height="6" rx="1.2"/>' +
       '</symbol>' +
+      /* runner:奔跑的人(头 + 前倾身躯 + 摆臂迈腿),跑酷 */
+      '<symbol id="ic_runner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<circle cx="14" cy="4.5" r="2"/>' +
+        '<path d="M13 8l-3 4 3 2 1 5"/>' +
+        '<path d="M10 12l-4 1"/>' +
+        '<path d="M13 10l4 2 2-2"/>' +
+        '<path d="M8 22l2-4"/>' +
+      '</symbol>' +
     '</svg>';
 
   function inject() {

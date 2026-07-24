@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>runner — FairPlay</title>
+  <link rel="stylesheet" href="../common.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#14161a">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FairPlay">
+  <script src="../app.js"></script>
+  <script>FairPlay.registerSW("../sw.js");</script>
+
+  <style>
+    /* 跑酷 stage:画布铺满,伪 3D 场景自绘;换道靠左右滑,禁滚页 */
+    #runner_stage { padding:0; overflow:hidden; }
+    #rn_canvas { width:100%; height:100%; display:block; touch-action:none; -webkit-user-select:none; user-select:none; }
+  </style>
+</head>
+<body>
+  <div id="app_frame">
+    <!-- 置顶栏:空壳,内容由 topbar.js 注入 -->
+    <header id="app_topbar"></header>
+    <!-- 控制栏:空壳,内容由 control.js 注入(时间/▶⏸/我·对抗条·对手) -->
+    <div id="app_control"></div>
+    <!-- 游戏 play 区:伪 3D 画布 -->
+    <main id="runner_stage" class="app_stage"><canvas id="rn_canvas"></canvas></main>
+  </div>
+
+  <!-- 版本号 + 通用编码 -->
+  <script src="../version.js"></script>
+  <script src="../pack.js"></script>
+  <!-- 注册表(游戏页按 ?g 查自己的 board=车道数 / durs)-->
+  <script src="../games.js"></script>
+  <!-- 先通用置顶栏文本,再游戏专属文本 -->
+  <script src="../index.lang.js"></script>
+  <script src="runner.lang.js"></script>
+  <!-- 图标雪碧图 + 置顶栏注入 -->
+  <script src="../assets/icons.js"></script>
+  <script src="../topbar.js"></script>
+  <script>FairPlay.applyI18n();</script>
+  <!-- 控制栏 + 伪 3D 引擎 + 游戏逻辑 -->
+  <script src="../control.js"></script>
+  <script src="../p3d.js"></script>
+  <script src="runner.js"></script>
+</body>
+</html>

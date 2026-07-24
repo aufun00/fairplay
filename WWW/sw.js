@@ -17,6 +17,7 @@ const SHELL = [
   "./topbar.js",
   "./home-core.js",
   "./control.js",
+  "./p3d.js",
   "./pack.js",
   "./games.js",
   "./index.lang.js",
@@ -30,7 +31,10 @@ const SHELL = [
   "./match3/match3.js",
   "./blockfit/blockfit.html",
   "./blockfit/blockfit.lang.js",
-  "./blockfit/blockfit.js"
+  "./blockfit/blockfit.js",
+  "./runner/runner.html",
+  "./runner/runner.lang.js",
+  "./runner/runner.js"
 ];
 
 self.addEventListener("install", (e) => {

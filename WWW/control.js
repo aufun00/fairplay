@@ -114,6 +114,14 @@
       paintBtn(); paintTime(); paintVersus();   // 定格最终对抗态(对手现值按结束时刻的已用时长)
       showResult(o || {});
     }
+    /* 死亡(撞死/掉落)= 剩余时间归零 → 走与自然超时同一出口(游戏在 onTimeout 里算分收尾)。
+       只对倒计时有意义:把 elapsed 顶到 duration。现有限时游戏不调用,零影响。 */
+    function expire() {
+      if (running) stopClock();
+      if (timer.mode === "down") elapsedMs = timer.duration;
+      paintTime(); paintVersus();
+      if (!timer.fired) { timer.fired = true; if (timer.onTimeout) timer.onTimeout(); }
+    }
 
     if (runBtn) runBtn.addEventListener("click", function () { if (phase === "running") pause(); else run(); });
 
@@ -176,6 +184,6 @@
     }
 
     paintBtn(); paintTime(); paintVersus();
-    return { run: run, pause: pause, end: end, elapsed: elapsed, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty, setScore: setScore };
+    return { run: run, pause: pause, end: end, expire: expire, elapsed: elapsed, phase: function () { return phase; }, setTimer: setTimer, addPenalty: addPenalty, setScore: setScore };
   };
 })();

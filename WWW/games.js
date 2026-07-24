@@ -12,6 +12,7 @@
 window.GAMES = [
   { node_type:"game", key:"match3",   id:1, icon:"match3",   board:8, durs:[30, 60] },
   { node_type:"game", key:"blockfit", id:4, icon:"blockfit", board:8, durs:[30, 60] },
+  { node_type:"game", key:"runner",   id:5, icon:"runner",   board:3, durs:[30, 60] },
 ];
 
 /* ---- 目录查询 API(唯一实现,全站共用:游戏页 ?g 查自己、首页扁平渲染、路由器分发)。
